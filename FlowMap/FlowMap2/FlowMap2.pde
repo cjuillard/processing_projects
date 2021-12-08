@@ -10,21 +10,36 @@ ArrayList<Particle> particles = new ArrayList<Particle>();
 int NumParticles = 500;
 float flowStrength = .05;
 int iterationCount = 10;
-float noiseOffset = random(100);
+PVector noiseOffset = PVector.random2D().mult(random(100));
 float noiseScale = .3;
 float noiseRange = 1;
 float seedIterations = 100;
+boolean fade = false;
+float fadeIntensity = 12;
+boolean noiseOffsetting = false;
+PVector noiseOffsetPerFrame = new PVector(.02, 0, .02);
+float drawIntensity = 2;
+boolean hueChange = false;
+
+void setupV1() {
+  scl = 50;
+  fill(255,255,255,255);
+  //fill(0,0,0,255);
+  //fill(36, 54, 107,255);
+  rect(0,0,width,height);
+}
 
 void setup() {
   size(2048, 1157);
-  scl = 50;
+  setupV1();
+  
   rows = height / scl;
   cols = width / scl;
   flowField = new PVector[cols][rows];
   
   for(int x = 0; x < cols; x++){
      for(int y = 0; y < rows; y++) {
-       flowField[x][y] = PVector.fromAngle(noise(noiseOffset + x * noiseScale, noiseOffset + y * noiseScale) * TWO_PI * noiseRange)
+       flowField[x][y] = PVector.fromAngle(noise(noiseOffset.x + x * noiseScale, noiseOffset.y + y * noiseScale) * TWO_PI * noiseRange)
          .mult(flowStrength);
      }
   }
@@ -38,9 +53,6 @@ void setup() {
     particles.add(p);
   }
   
-  fill(255,255,255,255);
-  rect(0,0,width,height);
-  
   for(int i = 0; i < seedIterations; i++) {
     for(Particle p : particles) {
       PVector f = GetForce(p.Pos);
@@ -48,6 +60,15 @@ void setup() {
       p.update();
     }  
   }
+}
+
+void updateFlowField() {
+   for(int x = 0; x < cols; x++){
+     for(int y = 0; y < rows; y++) {
+       flowField[x][y] = PVector.fromAngle(noise(noiseOffset.x + x * noiseScale, noiseOffset.y + y * noiseScale) * TWO_PI * noiseRange)
+         .mult(flowStrength);
+     }
+  } 
 }
 
 void mouseClicked() {
@@ -80,7 +101,14 @@ enum DrawType {
 float currHue = 0;
 void draw() {
   
-  DrawType drawType = DrawType.Hue;
+  DrawType drawType = DrawType.BlackAndWhite;
+   
+  if(fade) {
+    colorMode(RGB, 255, 255, 255, 255);
+    fill(255,255,255,fadeIntensity);
+    rect(0,0,width,height);
+  }
+  
   switch(drawType) {
    case Debug:
        clear();
@@ -92,13 +120,16 @@ void draw() {
       noStroke();
       break;
   }
-   
   
+  if(noiseOffsetting) {
+     noiseOffset.add(noiseOffsetPerFrame);
+     updateFlowField();
+  }
   for(int i = 0; i < iterationCount; i++) {
     switch(drawType) {
       case Hue:
         colorMode(HSB, 255, 255, 255, 255);
-        color c = color(currHue, 255, 255, 4);
+        color c = color(currHue, 255, 255, drawIntensity);
         fill(c);
         noStroke();
         currHue+=.1f;

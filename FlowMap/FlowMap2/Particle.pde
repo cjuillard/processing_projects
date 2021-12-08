@@ -1,7 +1,7 @@
 public class Particle {
    public PVector Pos = new PVector();
    public PVector Velocity = new PVector();
-   public float size = 5;
+   public float size = 8;
    public float Drag = .99f;
    
    public void update() {
