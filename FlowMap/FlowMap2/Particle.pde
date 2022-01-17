@@ -1,12 +1,26 @@
+boolean useDiscreteDirections = false;
+int numDirections = 10;
+
 public class Particle {
    public PVector Pos = new PVector();
    public PVector Velocity = new PVector();
    public float size = 8;
    public float Drag = .99f;
    
+   
+   private PVector tmp = new PVector();
    public void update() {
      Velocity.mult(Drag);
-     Pos.add(Velocity); 
+     
+     if(useDiscreteDirections) {
+       float heading = Velocity.heading();
+       float stepSize = (TWO_PI / numDirections);
+       float remainder = heading % stepSize;
+       heading = round(heading / stepSize) * stepSize;
+       tmp.set(cos(heading), sin(heading)).mult(Velocity.mag());
+       Pos.add(tmp); 
+     } else
+       Pos.add(Velocity); 
      if(Pos.x < 0)
        Pos.x = width;
      if(Pos.x > width)
