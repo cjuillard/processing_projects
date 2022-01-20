@@ -22,6 +22,11 @@ public class Segment {
     calculateB();
   }
   
+  void setA(PVector pos) {
+    a = pos.copy();
+    calculateB();
+  }
+  
   void calculateB() {
     float dx = len * cos(angle);
     float dy = len * sin(angle);
