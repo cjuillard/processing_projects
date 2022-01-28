@@ -9,7 +9,7 @@ class PoissonDiscSampling {
   
   ArrayList<PVector> active = new ArrayList<PVector>();
   
-  PoissonDiscSampling(int worldWidth, int worldHeight, float radius) {
+  PoissonDiscSampling(float worldWidth, float worldHeight, float radius) {
     this.worldWidth = worldWidth;
     this.worldHeight = worldHeight;
     this.radius = radius;

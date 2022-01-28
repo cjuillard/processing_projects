@@ -30,4 +30,9 @@ class Boid {
    }
  }
  
+ void draw() {
+   fill(255);
+   circle(pos.x,pos.y,3);
+ }
+ 
 }
