@@ -3,7 +3,7 @@ DelaunayTriangulation triangulation = new DelaunayTriangulation();
 ArrayList<PVector> points = new ArrayList<PVector>();
 ArrayList<Triangle> tris = new ArrayList<Triangle>();
 
-float scale = .25f;
+float scale = .5f;
 
 void setup() {
   size(640, 640); 
@@ -13,6 +13,7 @@ void setup() {
   //sampling = new PoissonDiscSampling(width, height, 10);
   //sampling.genPoints(points);
   
+  randomSeed(0);
   sampling = new PoissonDiscSampling(width * scale, height * scale, 10);
   sampling.genPoints(points);
   
@@ -20,7 +21,9 @@ void setup() {
 }
 
 void mouseClicked() {
-  sampling.genPoints(points);
+  //points.remove(random(0, floor(points.size())));
+  //triangulation.bowyerWatson(points, tris);
+  //sampling.genPoints(points);
 }
 
 void draw() {
@@ -38,10 +41,11 @@ void draw() {
   
   strokeWeight(2);
   for(Triangle tri : tris) {
+    strokeWeight(1);
     triangle(tri.p1.x, tri.p1.y, tri.p2.x, tri.p2.y, tri.p3.x, tri.p3.y);
     
     Circle c = tri.circumCenter;
-    circle(c.center.x, c.center.y, c.radius * 2);
+    //circle(c.center.x, c.center.y, c.radius * 2);
   }
   
   popMatrix();

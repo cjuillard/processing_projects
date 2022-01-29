@@ -1,63 +1,67 @@
-// https://en.wikipedia.org/wiki/Bowyer%E2%80%93Watson_algorithm
-//function BowyerWatson (pointList)
-//   // pointList is a set of coordinates defining the points to be triangulated
-//   triangulation := empty triangle mesh data structure
-//   add super-triangle to triangulation // must be large enough to completely contain all the points in pointList
-//   for each point in pointList do // add all the points one at a time to the triangulation
-//      badTriangles := empty set
-//      for each triangle in triangulation do // first find all the triangles that are no longer valid due to the insertion
-//         if point is inside circumcircle of triangle
-//            add triangle to badTriangles
-//      polygon := empty set
-//      for each triangle in badTriangles do // find the boundary of the polygonal hole
-//         for each edge in triangle do
-//            if edge is not shared by any other triangles in badTriangles
-//               add edge to polygon
-//      for each triangle in badTriangles do // remove them from the data structure
-//         remove triangle from triangulation
-//      for each edge in polygon do // re-triangulate the polygonal hole
-//         newTri := form a triangle from edge to point
-//         add newTri to triangulation
-//   for each triangle in triangulation // done inserting points, now clean up
-//      if triangle contains a vertex from original super-triangle
-//         remove triangle from triangulation
-//   return triangulation
+import java.util.*;
 
 class DelaunayTriangulation {
+  private HashSet<PVector> superTriPoints = new HashSet<PVector>();
+  
+  // https://en.wikipedia.org/wiki/Bowyer%E2%80%93Watson_algorithm
   void bowyerWatson(ArrayList<PVector> points, ArrayList<Triangle> outputTriangles) {
     outputTriangles.clear();
     outputTriangles.add(createSuperTriangle(points));
     
+    superTriPoints.clear();
+    for(Triangle tri : outputTriangles) {
+      superTriPoints.add(tri.p1);
+      superTriPoints.add(tri.p2);
+      superTriPoints.add(tri.p3);
+    }
+    
+    HashSet<Edge> polygon = new HashSet<Edge>();
+    HashSet<Edge> sharedEdges = new HashSet<Edge>();
     ArrayList<Triangle> badTris = new ArrayList<Triangle>();
-    for(PVector p : points) {
+    for(int i = 0; i < points.size(); i++) {
+    //for(PVector p : points) {
+      PVector p = points.get(i);
       badTris.clear();
       
       for(Triangle tri : outputTriangles) {
         if(tri.circumCircleContains(p)) {
-          
+          badTris.add(tri);
         }
       }
+      
+      // TODO polygon := empty set
+      polygon.clear();
+      sharedEdges.clear();
+      for(Triangle tri : badTris) {
+        Edge e1 = new Edge(tri.p1, tri.p2);
+        Edge e2 = new Edge(tri.p2, tri.p3);
+        Edge e3 = new Edge(tri.p3, tri.p1);
+        
+        // Add the edges to the polygon - but if those edges already exist in the polygon add them to the sharedEdges set to get removed
+        if(!polygon.add(e1)) sharedEdges.add(e1);
+        if(!polygon.add(e2)) sharedEdges.add(e2);
+        if(!polygon.add(e3)) sharedEdges.add(e3);
+        
+        outputTriangles.remove(tri);
+      }
+      
+      for(Edge e : sharedEdges) {
+        polygon.remove(e);
+      }
+      
+      for(Edge e : polygon) {
+        outputTriangles.add(new Triangle(p, e.p1, e.p2));
+      }
     }
-    //add super-triangle to triangulation // must be large enough to completely contain all the points in pointList
-//   for each point in pointList do // add all the points one at a time to the triangulation
-//      badTriangles := empty set
-//      for each triangle in triangulation do // first find all the triangles that are no longer valid due to the insertion
-//         if point is inside circumcircle of triangle
-//            add triangle to badTriangles
-//      polygon := empty set
-//      for each triangle in badTriangles do // find the boundary of the polygonal hole
-//         for each edge in triangle do
-//            if edge is not shared by any other triangles in badTriangles
-//               add edge to polygon
-//      for each triangle in badTriangles do // remove them from the data structure
-//         remove triangle from triangulation
-//      for each edge in polygon do // re-triangulate the polygonal hole
-//         newTri := form a triangle from edge to point
-//         add newTri to triangulation
-//   for each triangle in triangulation // done inserting points, now clean up
-//      if triangle contains a vertex from original super-triangle
-//         remove triangle from triangulation
-//   return triangulation
+    
+    for(int i = outputTriangles.size() - 1; i >= 0; i--) {
+      Triangle tri = outputTriangles.get(i);
+      if(superTriPoints.contains(tri.p1) ||
+          superTriPoints.contains(tri.p2) ||
+          superTriPoints.contains(tri.p3)) {
+        outputTriangles.remove(i);
+      }
+    }
   }  
   
   Triangle createSuperTriangle(ArrayList<PVector> points) {
@@ -85,7 +89,44 @@ class DelaunayTriangulation {
   }
 }
 
-
+class Edge {
+ PVector p1;
+ PVector p2;
+ public float weight;
+ 
+ Edge(PVector p1, PVector p2) {
+   // Set these values in a sorted way so the hashcode doesn't have to worry about sorting them to get a consistent hashcode
+   if(p1.x < p2.x) {
+     set(p1,p2);
+     return;
+   } else if(p1.x > p2.x) {
+     set(p2,p1);
+     return;
+   }
+     
+   if(p1.y < p2.y) {
+     set(p1,p2);
+   }
+   else if(p1.y > p2.y) { 
+     set(p2,p1);
+   }
+   else
+     set(p1,p2);
+ }
+ 
+ private void set(PVector p1, PVector p2) {
+   this.p1 = p1;
+   this.p2 = p2;
+ }
+  
+ public int hashCode() {
+   return Objects.hash(p1, p2);
+  }
+  
+  public boolean equals(Object o){
+    return this.hashCode()==o.hashCode();
+  }
+}
 class Circle {
  PVector center;
  float radius;
@@ -107,7 +148,7 @@ class Triangle {
     this.p2 = p2;
     this.p3 = p3;
     
-    // https://en.wikipedia.org/wiki/Circumscribed_circle#Triangles - catesian coordinates equation
+    // https://en.wikipedia.org/wiki/Circumscribed_circle#Triangles - cartesian coordinates equation
     float d = 2 * (p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y));
     
     float sqP1 = sq(p1.x) + sq(p1.y);
@@ -120,6 +161,6 @@ class Triangle {
   }
   
   boolean circumCircleContains(PVector other) {
-    return true;
+    return other.dist(circumCenter.center) <= circumCenter.radius;
   }
 }
