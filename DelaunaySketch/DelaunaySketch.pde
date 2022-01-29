@@ -5,11 +5,14 @@ ArrayList<Triangle> tris = new ArrayList<Triangle>();
 
 float scale = .5f;
 
+PImage img;
+
 void setup() {
   size(640, 640); 
   stroke(255);
   noFill();
   
+  img = loadImage("../Loops2/Loop2/test.jpg");
   //sampling = new PoissonDiscSampling(width, height, 10);
   //sampling.genPoints(points);
   
@@ -21,8 +24,11 @@ void setup() {
 }
 
 void mouseClicked() {
-  //points.remove(random(0, floor(points.size())));
-  //triangulation.bowyerWatson(points, tris);
+  for(int i = 0; i < 10 && points.size() > 0; i++) {
+    points.remove((int)random(0, floor(points.size())));
+  }
+  
+  triangulation.bowyerWatson(points, tris);
   //sampling.genPoints(points);
 }
 
@@ -33,6 +39,7 @@ void draw() {
   float offsetY = (height - sampling.worldHeight) * 0.5f;
   pushMatrix();
   translate(offsetX, offsetY);
+  noFill();
   for(PVector p : points) {
     strokeWeight(4);
     stroke(255);
@@ -42,8 +49,11 @@ void draw() {
   strokeWeight(2);
   for(Triangle tri : tris) {
     strokeWeight(1);
+    fill(tri.c);
     triangle(tri.p1.x, tri.p1.y, tri.p2.x, tri.p2.y, tri.p3.x, tri.p3.y);
     
+    float centerX = (tri.p1.x + tri.p2.x + tri.p3.x) / 3f;
+    float centerY = (tri.p1.y + tri.p2.y + tri.p3.y) / 3f;
     Circle c = tri.circumCenter;
     //circle(c.center.x, c.center.y, c.radius * 2);
   }

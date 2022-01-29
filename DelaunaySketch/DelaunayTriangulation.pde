@@ -29,7 +29,6 @@ class DelaunayTriangulation {
         }
       }
       
-      // TODO polygon := empty set
       polygon.clear();
       sharedEdges.clear();
       for(Triangle tri : badTris) {
@@ -142,11 +141,13 @@ class Triangle {
   PVector p2;
   PVector p3;
   Circle circumCenter;
+  color c;
   
   Triangle(PVector p1, PVector p2, PVector p3) {
     this.p1 = p1;
     this.p2 = p2;
     this.p3 = p3;
+    c = color(random(255), random(255), random(255));
     
     // https://en.wikipedia.org/wiki/Circumscribed_circle#Triangles - cartesian coordinates equation
     float d = 2 * (p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y));
