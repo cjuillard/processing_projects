@@ -150,8 +150,6 @@ class Triangle {
   Circle circumCenter;
   color c;
   
-  Triangle[] edgeNeighbors = new Triangle[3];
-  
   Triangle(PVector p1, PVector p2, PVector p3) {
     this.p1 = p1;
     this.p2 = p2;
@@ -170,22 +168,6 @@ class Triangle {
     circumCenter = new Circle(center, center.dist(p1)); 
   }
   
-  void addEdgeNeighbor(Triangle other, int index) {
-    edgeNeighbors[index] = other;
-  }
-  
-  void addEdgeNeighbor(Triangle other, Edge e) {
-    if(e.equals(new Edge(p1, p2))) {
-      edgeNeighbors[0] = other;
-    } else if(e.equals(new Edge(p2, p3))) {
-      edgeNeighbors[1] = other;
-    } else if(e.equals(new Edge(p3, p1))) {
-      edgeNeighbors[2] = other;
-    } else {
-      println("FAILED TO FIND EDGE NEIGHBOR: " + this + ", "+ other);
-    }
-  }
-  
   boolean isClockwise() {
     float d = (p2.x - p1.x) * (p3.y - p1.y) - (p3.x - p1.x) * (p2.y - p1.y);  // compute determinant
     return d < 0;
@@ -202,14 +184,6 @@ class Triangle {
   
   boolean circumCircleContains(PVector other) {
     return other.dist(circumCenter.center) <= circumCenter.radius;
-  }
-  
-  String getDebugString() {
-    String s = p1 + ", " + p2 + ", " + p3;
-    s += "\n-- e[0] = " + edgeNeighbors[0];
-    s += "\n-- e[1] = " + edgeNeighbors[1];
-    s += "\n-- e[2] = " + edgeNeighbors[2];
-    return s;
   }
   
   String toString() {
