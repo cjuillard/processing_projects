@@ -91,7 +91,6 @@ class DelaunayTriangulation {
 class Edge {
  PVector p1;
  PVector p2;
- public float weight;
  
  Edge(PVector p1, PVector p2) {
    // Set these values in a sorted way so the hashcode doesn't have to worry about sorting them to get a consistent hashcode
@@ -123,7 +122,15 @@ class Edge {
   }
   
   public boolean equals(Object o){
-    return this.hashCode()==o.hashCode();
+    if(o == null || !(o instanceof Edge))
+      return false;
+    Edge oEdge = (Edge)o;
+    if(p1.equals(oEdge.p1) && p2.equals(oEdge.p2))
+      return true;
+    if(p1.equals(oEdge.p2) && p2.equals(oEdge.p1))
+      return true;
+      
+    return false;
   }
 }
 class Circle {
@@ -143,6 +150,8 @@ class Triangle {
   Circle circumCenter;
   color c;
   
+  Triangle[] edgeNeighbors = new Triangle[3];
+  
   Triangle(PVector p1, PVector p2, PVector p3) {
     this.p1 = p1;
     this.p2 = p2;
@@ -161,7 +170,49 @@ class Triangle {
     circumCenter = new Circle(center, center.dist(p1)); 
   }
   
+  void addEdgeNeighbor(Triangle other, int index) {
+    edgeNeighbors[index] = other;
+  }
+  
+  void addEdgeNeighbor(Triangle other, Edge e) {
+    if(e.equals(new Edge(p1, p2))) {
+      edgeNeighbors[0] = other;
+    } else if(e.equals(new Edge(p2, p3))) {
+      edgeNeighbors[1] = other;
+    } else if(e.equals(new Edge(p3, p1))) {
+      edgeNeighbors[2] = other;
+    } else {
+      println("FAILED TO FIND EDGE NEIGHBOR: " + this + ", "+ other);
+    }
+  }
+  
+  boolean isClockwise() {
+    float d = (p2.x - p1.x) * (p3.y - p1.y) - (p3.x - p1.x) * (p2.y - p1.y);  // compute determinant
+    return d < 0;
+  }
+  
+  void makeClockwise() {
+    if(isClockwise())
+      return;
+      
+    PVector tmp = p2;
+    p2 = p1;
+    p1 = tmp;
+  }
+  
   boolean circumCircleContains(PVector other) {
     return other.dist(circumCenter.center) <= circumCenter.radius;
+  }
+  
+  String getDebugString() {
+    String s = p1 + ", " + p2 + ", " + p3;
+    s += "\n-- e[0] = " + edgeNeighbors[0];
+    s += "\n-- e[1] = " + edgeNeighbors[1];
+    s += "\n-- e[2] = " + edgeNeighbors[2];
+    return s;
+  }
+  
+  String toString() {
+    return p1 + ", " + p2 + ", " + p3;
   }
 }
