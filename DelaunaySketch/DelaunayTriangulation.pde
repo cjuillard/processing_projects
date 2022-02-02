@@ -169,8 +169,16 @@ class Triangle {
   }
   
   boolean isClockwise() {
-    float d = (p2.x - p1.x) * (p3.y - p1.y) - (p3.x - p1.x) * (p2.y - p1.y);  // compute determinant
+    float d = computeDeterminant();
     return d < 0;
+  }
+  
+  float computeDeterminant() {
+    return (p2.x - p1.x) * (p3.y - p1.y) - (p3.x - p1.x) * (p2.y - p1.y);
+  }
+  
+  float getArea() {
+    return 0.5f * computeDeterminant();
   }
   
   void makeClockwise() {
@@ -181,6 +189,15 @@ class Triangle {
     p2 = p1;
     p1 = tmp;
   }
+  
+  // Returns whether this point is contained within the triangle
+  boolean isInside(PVector p) {
+    return edgeFunction(p1, p2, p) && edgeFunction(p2, p3, p) && edgeFunction(p3, p1, p);
+  }
+  
+  boolean edgeFunction(PVector a, PVector b, PVector p) { 
+    return ((p.x - a.x) * (b.y - a.y) - (p.y - a.y) * (b.x - a.x) >= 0); 
+  } 
   
   boolean circumCircleContains(PVector other) {
     return other.dist(circumCenter.center) <= circumCenter.radius;
