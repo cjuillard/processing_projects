@@ -1,11 +1,13 @@
 PoissonDiscSampling sampling;
+VariablePoissonDiscSampling variableSampling;
 DelaunayTriangulation triangulation = new DelaunayTriangulation();
 ArrayList<PVector> points = new ArrayList<PVector>();
 ArrayList<Triangle> tris = new ArrayList<Triangle>();
 ImageStats stats;
 HashMap<PVector, ArrayList<Triangle>> vertexToTris = new HashMap<PVector, ArrayList<Triangle>>();
 
-float scale = 0.5f;
+float worldToPixel = 1;
+float scale = 1f;
 
 PImage img;
 
@@ -17,12 +19,60 @@ void setup() {
   stroke(255);
   noFill();
   
-  img = loadImage("../Loops2/Loop2/test.jpg");
+  //img = loadImage("../Loops2/Loop2/test.jpg");
+  //img = loadImage("test.png");
+  //img = loadImage("test2.jpg");
+  //img = loadImage("test3.jpg");
+  img = loadImage("mar-bustos-ARVFsI-32Uk-unsplash.jpg");
+  //img = loadImage("jeff-king-bJHWJeiHfHc-unsplash.jpg");
+  //img = loadImage("boris-baldinger-eUFfY6cwjSU-unsplash.jpg");
   
   randomSeed(0);
   //sampling = new PoissonDiscSampling(width * scale, height * scale, 10);
-  sampling = new PoissonDiscSampling(width * scale, height * scale, 20);
+  float worldWidth = width * scale;
+  float worldHeight = height * scale;
+  worldToPixel = img.width / worldWidth;
+  
+  sampling = new PoissonDiscSampling(worldWidth, worldHeight, 15);
   sampling.genPoints(points);
+  
+  final float minRadius = 4;
+  final float maxRadius = 25;
+  final float sdDist = 4;
+  RadiusProvider radiusProvider = new RadiusProvider() {
+    private float minSDFound = Float.MAX_VALUE;
+    private float maxSDFound = Float.MIN_VALUE;
+    public float getRadius(float worldX, float worldY) {
+      float sd = computeSD(worldX, worldY, sdDist);
+      float minSD = 2;
+      float maxSD = 70;
+      float t = (sd - minSD) / (maxSD - minSD);
+      t = clamp01(t);
+      
+      if(sd < minSDFound) {
+        println("minSDFound = " + sd);
+      }
+      if(sd > maxSDFound) {
+        println("maxSDFound = " + sd);
+      }
+      minSDFound = min(minSDFound, sd);
+      maxSDFound = max(maxSDFound, sd);
+      
+      return lerp(maxRadius, minRadius, t);
+      //return minRadius + (maxRadius - minRadius) * x / width;  // more sparse the further right we go
+      //return 10;
+      
+    }
+  };
+  variableSampling = new VariablePoissonDiscSampling(worldWidth, worldHeight, minRadius, maxRadius, radiusProvider);
+  variableSampling.genPoints(points);
+  
+  for(int x = 0; x < width; x++) {
+    for(int y = 0; y < height; y++) {
+      //println(computeSD(x,y,20));
+    }
+  }
+  
   //genTestPoints();
   genTriangulationAndStats();
 }
@@ -30,7 +80,7 @@ void setup() {
 void genTriangulationAndStats() {
   triangulation.bowyerWatson(points, tris);
   
-  float pixelToWorld = img.width / sampling.worldWidth;
+  float pixelToWorld = sampling.worldWidth / img.width;
   stats = new ImageStats(img, tris, pixelToWorld);
   initVertToTris();
 }
@@ -62,17 +112,84 @@ void genTestPoints() {
   }
 }
 
-void mouseClicked() {
-  
-  
-  for(int i = 0; i < 100 && points.size() > 0; i++) {
-    points.remove((int)random(0, floor(points.size())));
+float computeScore(ArrayList<Triangle> tris) {
+  int totalNumPixels = 0;
+  float currSD = 0;
+  for(Triangle tri : tris) {
+    TriangleStats stat = stats.getStat(tri);
+    if(stat.imgPixelsInside == 0) {
+      return 0;  // Force these to not be removed
+      
+      //int biasPixels = 10;
+      //currSD = totalNumPixels == 0 ? stats.maxSD : lerp(currSD, stats.minSD, biasPixels / (float)totalNumPixels);
+      //totalNumPixels += biasPixels;  // bias them towards getting removed
+      //continue;
+      
+      //return Float.MAX_VALUE;
+      
+    }
+    
+    if(totalNumPixels == 0) {
+      currSD = stat.avgSD;
+      totalNumPixels += stat.imgPixelsInside;
+    } else {
+      totalNumPixels += stat.imgPixelsInside;
+      currSD = lerp(currSD, stat.avgSD, stat.imgPixelsInside / (float)totalNumPixels);
+    }
   }
   
-  genTriangulationAndStats();
+  return currSD;
+}
+
+int getClosestPointIndexToMousePos() {
+  PVector mousePos = new PVector(mouseX, mouseY);
+  int minPosIndx = -1;
+  float minDist = Float.MAX_VALUE;
+  for(int i = 0; i < points.size(); i++) {
+    PVector p = points.get(i);
+    if(p.dist(mousePos) < minDist) {
+      minDist = p.dist(mousePos);
+      minPosIndx = i;
+    }
+  }
   
-  //polyIndex = (polyIndex + 1) % voronoiPolys.size();
-  //println(polyIndex + " / " + voronoiPolys.size());
+  return minPosIndx;
+}
+void mouseClicked() {
+  
+  //Collections.sort(points, new Comparator<PVector>(){
+  //  @Override
+  //  public int compare(PVector o1, PVector o2) {
+  //    ArrayList<Triangle> tris1 = vertexToTris.get(o1);
+  //    ArrayList<Triangle> tris2 = vertexToTris.get(o2);
+      
+  //    float s1 = computeScore(tris1);
+  //    float s2 = computeScore(tris2);
+  //    float delta = s1 - s2;
+  //    if(delta == 0)
+  //      return 0;
+  //    if(delta < 0) 
+  //      return 1;
+      
+  //    return -1;
+  //  }
+  //});
+  
+  //for(int i = points.size() - 1, n = points.size() - floor(.1f * points.size()); i >= n; i--) {
+  //  ArrayList<Triangle> tris1 = vertexToTris.get(points.get(i));
+  //  //println(computeScore(tris1));
+  //  points.remove(i);
+  //}
+  
+  //int minPosIndx = getClosestPointIndexToMousePos();
+
+  //if(minPosIndx != -1) {
+  //  points.remove(minPosIndx);
+  //}
+  
+  //genTriangulationAndStats();
+  
+  println("computeSD(..)=" + computeSD(mouseX, mouseY, 10));
   
   //save("test.png");
 }
@@ -89,27 +206,39 @@ void draw() {
   pushMatrix();
   translate(offsetX, offsetY);
   noFill();
-  for(PVector p : points) {
-    strokeWeight(4);
-    stroke(255);
-    //point(p.x, p.y);
+  //drawPoints();
+  
+  drawTris();
+  
+  int posIndex = getClosestPointIndexToMousePos();
+  if(posIndex != -1) {
+    PVector closest = points.get(posIndex);
+    fill(255,0,0);
+    circle(closest.x, closest.y, 3);
   }
   
+  popMatrix();
+}
+
+void drawTris() {
   strokeWeight(2);
   for(Triangle tri : tris) {
     
+    //stroke(255);
     strokeWeight(.1f);
-    noStroke();
+    //noStroke();
     
     float centerX = (tri.p1.x + tri.p2.x + tri.p3.x) / 3f;
     float centerY = (tri.p1.y + tri.p2.y + tri.p3.y) / 3f;
     int normX = floor(clamp01(centerX / sampling.worldWidth) * img.width);
     int normY = floor(clamp01(centerY / sampling.worldHeight) * img.height);
     color col = img.get(normX, normY);
-    //fill(col);
+    fill(col);
+    //stroke(col);
+    stroke(255);
     TriangleStats triStats = stats.triStats.get(tri); 
     float normalizedScore = (triStats.avgSD - stats.minSD) / (stats.maxSD - stats.minSD);
-    fill(normalizedScore * 255);
+    //fill(normalizedScore * 255);
     
     //fill(tri.c);
     triangle(tri.p1.x, tri.p1.y, tri.p2.x, tri.p2.y, tri.p3.x, tri.p3.y);
@@ -117,6 +246,77 @@ void draw() {
     Circle c = tri.circumCenter;
     //circle(c.center.x, c.center.y, c.radius * 2);
   }
+}
+
+void drawPoints() {
+  for(PVector p : points) {
+    strokeWeight(4);
+    stroke(255);
+    point(p.x, p.y);
+  }
+}
+
+float computeSD(float centerX, float centerY, float worldDist) {
   
-  popMatrix();
+  int minX = floor((centerX - worldDist) * worldToPixel);
+  int minY = floor((centerY - worldDist) * worldToPixel);
+  int maxX = floor((centerX + worldDist) * worldToPixel);
+  int maxY = floor((centerY + worldDist) * worldToPixel);
+  
+  PVector testPos = new PVector();
+  float pixelToWorld = 1 / worldToPixel;
+  
+  // Compute averages and total area
+  double rSum = 0;
+  double gSum = 0;
+  double bSum = 0;
+  int totalPixels = 0;
+  for(int x = minX; x <= maxX; x++) {
+    for(int y = minY; y <= maxY; y++) {
+      
+      testPos.set(x * pixelToWorld, y * pixelToWorld);
+      color argb = img.get(x, y);
+      int r = (argb >> 16) & 0xFF;  // Faster way of getting red(argb)
+      int g = (argb >> 8) & 0xFF;   // Faster way of getting green(argb)
+      int b = argb & 0xFF;
+      
+      rSum += r;
+      gSum += g;
+      bSum += b;
+      totalPixels++;
+    }
+  }
+  
+  if(totalPixels == 0) {
+    return 0;
+  }
+  
+  // Compute standard deviation
+  float rAvg = (float)(rSum / totalPixels);
+  float gAvg = (float)(gSum / totalPixels);
+  float bAvg = (float)(bSum / totalPixels);
+  
+  double rSD = 0;
+  double gSD = 0;
+  double bSD = 0;
+  for(int x = minX; x <= maxX; x++) {
+    for(int y = minY; y <= maxY; y++) {
+      
+      testPos.set(x * pixelToWorld, y * pixelToWorld);
+      color argb = img.get(x, y);
+      int r = (argb >> 16) & 0xFF;
+      int g = (argb >> 8) & 0xFF; 
+      int b = argb & 0xFF;
+      
+      rSD += sq(r - rAvg);
+      gSD += sq(g - gAvg);
+      bSD += sq(b - bAvg);
+    }
+  }
+  
+  rSD = sqrt((float)(rSD / totalPixels));
+  gSD = sqrt((float)(gSD / totalPixels));
+  bSD = sqrt((float)(bSD / totalPixels));
+  
+  return (float)(rSD + gSD + bSD) / 3f;
 }

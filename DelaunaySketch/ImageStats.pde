@@ -23,6 +23,10 @@ class ImageStats {
     }
   }
   
+  TriangleStats getStat(Triangle tri) {
+    return triStats.get(tri);
+  }
+  
   TriangleStats computeTriStats(Triangle tri) {
     int minX = floor(min(tri.p1.x, min(tri.p2.x, tri.p3.x)) * worldToPixel);
     int minY = floor(min(tri.p1.y, min(tri.p2.y, tri.p3.y)) * worldToPixel);
