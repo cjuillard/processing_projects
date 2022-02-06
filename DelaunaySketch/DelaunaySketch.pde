@@ -8,14 +8,20 @@ HashMap<PVector, ArrayList<Triangle>> vertexToTris = new HashMap<PVector, ArrayL
 
 float worldToPixel = 1;
 float scale = 1f;
+float worldPad = 50;
+float worldWidth;
+float worldHeight;
 
 PImage img;
 
 Triangle testTri;
 
 void setup() {
-  size(640, 640);
-  //size(1280, 960);
+  // Size should be set according to image's size - calculations make this assumption
+  //size(640, 640);
+  //size(2048, 1375);  // 1.jpg
+  //size(2048, 1536);  // 2.jpg
+  size(2048, 1360);  // 3.jpg
   stroke(255);
   noFill();
   
@@ -23,15 +29,15 @@ void setup() {
   //img = loadImage("test.png");
   //img = loadImage("test2.jpg");
   //img = loadImage("test3.jpg");
-  img = loadImage("mar-bustos-ARVFsI-32Uk-unsplash.jpg");
-  //img = loadImage("jeff-king-bJHWJeiHfHc-unsplash.jpg");
-  //img = loadImage("boris-baldinger-eUFfY6cwjSU-unsplash.jpg");
+  //img = loadImage("sample_images/1.jpg");
+  //img = loadImage("sample_images/2.jpg");
+  img = loadImage("sample_images/3.jpg");
   
   randomSeed(0);
   //sampling = new PoissonDiscSampling(width * scale, height * scale, 10);
-  float worldWidth = width * scale;
-  float worldHeight = height * scale;
-  worldToPixel = img.width / worldWidth;
+  worldWidth = width * scale + 2 * worldPad;
+  worldHeight = height * scale + 2 * worldPad;
+  worldToPixel = 1;
   
   sampling = new PoissonDiscSampling(worldWidth, worldHeight, 15);
   sampling.genPoints(points);
@@ -256,15 +262,22 @@ void drawPoints() {
   }
 }
 
-float computeSD(float centerX, float centerY, float worldDist) {
+float worldToPixel(float worldComp) {
+  return (worldComp - worldPad) * worldToPixel;
+}
+
+float pixelToWorld(float pixelComp) {
+  return (pixelComp / worldToPixel) + worldPad;
+}
+
+float computeSD(float centerWorldX, float centerWorldY, float pixelDist) {
+  float pixelX = worldToPixel(centerWorldX);
+  float pixelY = worldToPixel(centerWorldY);
   
-  int minX = floor((centerX - worldDist) * worldToPixel);
-  int minY = floor((centerY - worldDist) * worldToPixel);
-  int maxX = floor((centerX + worldDist) * worldToPixel);
-  int maxY = floor((centerY + worldDist) * worldToPixel);
-  
-  PVector testPos = new PVector();
-  float pixelToWorld = 1 / worldToPixel;
+  int minX = floor(pixelX - pixelDist);
+  int minY = floor(pixelY - pixelDist);
+  int maxX = ceil(pixelX + pixelDist);
+  int maxY = ceil(pixelY + pixelDist);
   
   // Compute averages and total area
   double rSum = 0;
@@ -272,10 +285,10 @@ float computeSD(float centerX, float centerY, float worldDist) {
   double bSum = 0;
   int totalPixels = 0;
   for(int x = minX; x <= maxX; x++) {
+    int testX = max(0, min(img.width, x));
     for(int y = minY; y <= maxY; y++) {
-      
-      testPos.set(x * pixelToWorld, y * pixelToWorld);
-      color argb = img.get(x, y);
+      int testY = max(0, min(img.height, y));
+      color argb = img.get(testX, testY);
       int r = (argb >> 16) & 0xFF;  // Faster way of getting red(argb)
       int g = (argb >> 8) & 0xFF;   // Faster way of getting green(argb)
       int b = argb & 0xFF;
@@ -300,10 +313,11 @@ float computeSD(float centerX, float centerY, float worldDist) {
   double gSD = 0;
   double bSD = 0;
   for(int x = minX; x <= maxX; x++) {
+    int testX = max(0, min(img.width, x));
     for(int y = minY; y <= maxY; y++) {
+      int testY = max(0, min(img.height, y));
       
-      testPos.set(x * pixelToWorld, y * pixelToWorld);
-      color argb = img.get(x, y);
+      color argb = img.get(testX, testY);
       int r = (argb >> 16) & 0xFF;
       int g = (argb >> 8) & 0xFF; 
       int b = argb & 0xFF;
