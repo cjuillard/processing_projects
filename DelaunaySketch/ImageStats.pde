@@ -66,9 +66,9 @@ class ImageStats {
     }
     
     // Compute standard deviation
-    float rAvg = (float)(rSum / totalPixels);
-    float gAvg = (float)(gSum / totalPixels);
-    float bAvg = (float)(bSum / totalPixels);
+    stats.avgR = (float)(rSum / totalPixels);
+    stats.avgG = (float)(gSum / totalPixels);
+    stats.avgB = (float)(bSum / totalPixels);
     
     double rSD = 0;
     double gSD = 0;
@@ -83,9 +83,9 @@ class ImageStats {
           int g = (argb >> 8) & 0xFF; 
           int b = argb & 0xFF;
           
-          rSD += sq(r - rAvg);
-          gSD += sq(g - gAvg);
-          bSD += sq(b - bAvg);
+          rSD += sq(r - stats.avgR);
+          gSD += sq(g - stats.avgG);
+          bSD += sq(b - stats.avgB);
         }
       }
     }
@@ -107,6 +107,10 @@ class ImageStats {
 class TriangleStats {
   Triangle t;
   int imgPixelsInside;
+  
+  float avgR;
+  float avgG;
+  float avgB;
   
   // Standard deviation on each channel
   float rSD;

@@ -21,17 +21,18 @@ void setup() {
   //size(640, 640);
   //size(2048, 1375);  // 1.jpg
   //size(2048, 1536);  // 2.jpg
-  size(2048, 1360);  // 3.jpg
+  //size(2048, 1360);  // 3.jpg
+  size(512, 512);  // test1.png + test3.jpg
   stroke(255);
   noFill();
   
   //img = loadImage("../Loops2/Loop2/test.jpg");
-  //img = loadImage("test.png");
+  img = loadImage("test.png");
   //img = loadImage("test2.jpg");
   //img = loadImage("test3.jpg");
   //img = loadImage("sample_images/1.jpg");
   //img = loadImage("sample_images/2.jpg");
-  img = loadImage("sample_images/3.jpg");
+  //img = loadImage("sample_images/3.jpg");
   
   randomSeed(0);
   //sampling = new PoissonDiscSampling(width * scale, height * scale, 10);
@@ -206,6 +207,7 @@ float clamp01(float val) {
 
 void draw() {
   background(0);
+  //image(img, 0, 0);
   
   float offsetX = (width - sampling.worldWidth) * 0.5f;
   float offsetY = (height - sampling.worldHeight) * 0.5f;
@@ -234,15 +236,18 @@ void drawTris() {
     strokeWeight(.1f);
     //noStroke();
     
-    float centerX = (tri.p1.x + tri.p2.x + tri.p3.x) / 3f;
-    float centerY = (tri.p1.y + tri.p2.y + tri.p3.y) / 3f;
-    int normX = floor(clamp01(centerX / sampling.worldWidth) * img.width);
-    int normY = floor(clamp01(centerY / sampling.worldHeight) * img.height);
-    color col = img.get(normX, normY);
+    float centerWorldX = (tri.p1.x + tri.p2.x + tri.p3.x) / 3f;
+    float centerWorldY = (tri.p1.y + tri.p2.y + tri.p3.y) / 3f;
+    int pixelX = round(worldToPixel(centerWorldX));
+    int pixelY = round(worldToPixel(centerWorldY));
+    
+    color col = img.get(pixelX, pixelY);
     fill(col);
+    
     //stroke(col);
     stroke(255);
-    TriangleStats triStats = stats.triStats.get(tri); 
+    TriangleStats triStats = stats.triStats.get(tri);
+    fill(triStats.avgR, triStats.avgG, triStats.avgB);
     float normalizedScore = (triStats.avgSD - stats.minSD) / (stats.maxSD - stats.minSD);
     //fill(normalizedScore * 255);
     
