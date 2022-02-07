@@ -23,11 +23,13 @@ void setup() {
   //size(2048, 1536);  // 2.jpg
   //size(2048, 1360);  // 3.jpg
   size(512, 512);  // test1.png + test3.jpg
+  //size(1024, 1024);  // test_large.png
   stroke(255);
   noFill();
   
   //img = loadImage("../Loops2/Loop2/test.jpg");
   img = loadImage("test.png");
+  //img = loadImage("test_large.png");
   //img = loadImage("test2.jpg");
   //img = loadImage("test3.jpg");
   //img = loadImage("sample_images/1.jpg");
@@ -199,24 +201,28 @@ void mouseClicked() {
   println("computeSD(..)=" + computeSD(mouseX, mouseY, 10));
   
   //save("test.png");
+  
+  drawTris = !drawTris;
 }
 
 float clamp01(float val) {
   return max(0, min(1, val));
 }
 
+boolean drawTris = true;
 void draw() {
-  background(0);
-  //image(img, 0, 0);
+  //background(0);
+  image(img, 0, 0);
   
-  float offsetX = (width - sampling.worldWidth) * 0.5f;
-  float offsetY = (height - sampling.worldHeight) * 0.5f;
+  //float offsetX = (width - sampling.worldWidth) * 0.5f;
+  //float offsetY = (height - sampling.worldHeight) * 0.5f;
   pushMatrix();
-  translate(offsetX, offsetY);
+  //translate(offsetX, offsetY);
   noFill();
   //drawPoints();
   
-  drawTris();
+  if(drawTris)
+    drawTris();
   
   int posIndex = getClosestPointIndexToMousePos();
   if(posIndex != -1) {
@@ -230,11 +236,19 @@ void draw() {
 
 void drawTris() {
   strokeWeight(2);
+  
+  PVector tmp1 = new PVector();
+  PVector tmp2 = new PVector();
+  PVector tmp3 = new PVector();
   for(Triangle tri : tris) {
     
     //stroke(255);
     strokeWeight(.1f);
     //noStroke();
+    
+    worldToPixel(tri.p1, tmp1);
+    worldToPixel(tri.p2, tmp2);
+    worldToPixel(tri.p3, tmp3);
     
     float centerWorldX = (tri.p1.x + tri.p2.x + tri.p3.x) / 3f;
     float centerWorldY = (tri.p1.y + tri.p2.y + tri.p3.y) / 3f;
@@ -248,11 +262,14 @@ void drawTris() {
     stroke(255);
     TriangleStats triStats = stats.triStats.get(tri);
     fill(triStats.avgR, triStats.avgG, triStats.avgB);
+    
+    float sdIntensity = clamp01((triStats.avgSD - stats.minSD) / (stats.maxSD - stats.minSD)) * 255;
+    //fill(sdIntensity, sdIntensity, sdIntensity);
     float normalizedScore = (triStats.avgSD - stats.minSD) / (stats.maxSD - stats.minSD);
     //fill(normalizedScore * 255);
     
     //fill(tri.c);
-    triangle(tri.p1.x, tri.p1.y, tri.p2.x, tri.p2.y, tri.p3.x, tri.p3.y);
+    triangle(tmp1.x, tmp1.y, tmp2.x, tmp2.y, tmp3.x, tmp3.y);
     
     Circle c = tri.circumCenter;
     //circle(c.center.x, c.center.y, c.radius * 2);
@@ -269,6 +286,11 @@ void drawPoints() {
 
 float worldToPixel(float worldComp) {
   return (worldComp - worldPad) * worldToPixel;
+}
+
+void worldToPixel(PVector in, PVector out) {
+  out.x = (in.x - worldPad) * worldToPixel;
+  out.y = (in.y - worldPad) * worldToPixel;
 }
 
 float pixelToWorld(float pixelComp) {
