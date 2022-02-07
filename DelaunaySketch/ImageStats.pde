@@ -1,15 +1,11 @@
 class ImageStats {
   HashMap<Triangle, TriangleStats> triStats = new HashMap<Triangle, TriangleStats>();
   PImage img;
-  float pixelToWorld;
-  float worldToPixel;
   float minSD;
   float maxSD;
   
-  ImageStats(PImage img, ArrayList<Triangle> triangles, float pixelToWorld) {
+  ImageStats(PImage img, ArrayList<Triangle> triangles) {
     this.img = img;
-    this.pixelToWorld = pixelToWorld;
-    this.worldToPixel = 1f / pixelToWorld;
   
     minSD = Float.MAX_VALUE;
     maxSD = Float.MIN_VALUE;
@@ -28,10 +24,15 @@ class ImageStats {
   }
   
   TriangleStats computeTriStats(Triangle tri) {
-    int minX = floor(min(tri.p1.x, min(tri.p2.x, tri.p3.x)) * worldToPixel);
-    int minY = floor(min(tri.p1.y, min(tri.p2.y, tri.p3.y)) * worldToPixel);
-    int maxX = ceil(max(tri.p1.x, max(tri.p2.x, tri.p3.x)) * worldToPixel);
-    int maxY = ceil(max(tri.p1.y, max(tri.p2.y, tri.p3.y)) * worldToPixel);
+    float minWorldX = min(tri.p1.x, min(tri.p2.x, tri.p3.x));
+    float minWorldY = min(tri.p1.y, min(tri.p2.y, tri.p3.y));
+    float maxWorldX = max(tri.p1.x, max(tri.p2.x, tri.p3.x));
+    float maxWorldY = max(tri.p1.y, max(tri.p2.y, tri.p3.y));
+    
+    int minX = floor(worldToPixel(minWorldX));
+    int minY = floor(worldToPixel(minWorldY));
+    int maxX = ceil(worldToPixel(maxWorldX));
+    int maxY = ceil(worldToPixel(maxWorldY));
     
     TriangleStats stats = new TriangleStats();
     stats.t = tri;
@@ -44,11 +45,13 @@ class ImageStats {
     double bSum = 0;
     int totalPixels = 0;
     for(int x = minX; x <= maxX; x++) {
+      int sampleX = max(0, min(img.width, x));
       for(int y = minY; y <= maxY; y++) {
+        int sampleY = max(0, min(img.height, y));
         
-        testPos.set(x * pixelToWorld, y * pixelToWorld);
+        testPos.set(pixelToWorld(sampleX), pixelToWorld(sampleY));
         if(tri.isInside(testPos)) {
-          color argb = img.get(x, y);
+          color argb = img.get(sampleX, sampleY);
           int r = (argb >> 16) & 0xFF;  // Faster way of getting red(argb)
           int g = (argb >> 8) & 0xFF;   // Faster way of getting green(argb)
           int b = argb & 0xFF;
@@ -74,11 +77,12 @@ class ImageStats {
     double gSD = 0;
     double bSD = 0;
     for(int x = minX; x <= maxX; x++) {
+      int sampleX = max(0, min(img.width, x));
       for(int y = minY; y <= maxY; y++) {
-        
-        testPos.set(x * pixelToWorld, y * pixelToWorld);
+        int sampleY = max(0, min(img.height, y));
+        testPos.set(pixelToWorld(sampleX), pixelToWorld(sampleY));
         if(tri.isInside(testPos)) {
-          color argb = img.get(x, y);
+          color argb = img.get(sampleX, sampleY);
           int r = (argb >> 16) & 0xFF;
           int g = (argb >> 8) & 0xFF; 
           int b = argb & 0xFF;

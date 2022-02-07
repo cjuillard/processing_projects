@@ -2,6 +2,7 @@ PoissonDiscSampling sampling;
 VariablePoissonDiscSampling variableSampling;
 DelaunayTriangulation triangulation = new DelaunayTriangulation();
 ArrayList<PVector> points = new ArrayList<PVector>();
+ArrayList<AnimatedPoint> animatedPoints = new ArrayList<AnimatedPoint>();
 ArrayList<Triangle> tris = new ArrayList<Triangle>();
 ImageStats stats;
 HashMap<PVector, ArrayList<Triangle>> vertexToTris = new HashMap<PVector, ArrayList<Triangle>>();
@@ -11,7 +12,7 @@ float scale = 1f;
 float worldPad = 50;
 float worldWidth;
 float worldHeight;
-
+float frameLength = 1/60f;
 PImage img;
 
 Triangle testTri;
@@ -22,19 +23,21 @@ void setup() {
   //size(2048, 1375);  // 1.jpg
   //size(2048, 1536);  // 2.jpg
   //size(2048, 1360);  // 3.jpg
-  size(512, 512);  // test1.png + test3.jpg
+  size(512, 340);  // 3_tiny.jpg
+  //size(512, 512);  // test1.png + test3.jpg
   //size(1024, 1024);  // test_large.png
   stroke(255);
   noFill();
   
   //img = loadImage("../Loops2/Loop2/test.jpg");
-  img = loadImage("test.png");
+  //img = loadImage("test.png");
   //img = loadImage("test_large.png");
   //img = loadImage("test2.jpg");
   //img = loadImage("test3.jpg");
   //img = loadImage("sample_images/1.jpg");
   //img = loadImage("sample_images/2.jpg");
   //img = loadImage("sample_images/3.jpg");
+  img = loadImage("sample_images/3_tiny.jpg");
   
   randomSeed(0);
   //sampling = new PoissonDiscSampling(width * scale, height * scale, 10);
@@ -76,12 +79,6 @@ void setup() {
   variableSampling = new VariablePoissonDiscSampling(worldWidth, worldHeight, minRadius, maxRadius, radiusProvider);
   variableSampling.genPoints(points);
   
-  for(int x = 0; x < width; x++) {
-    for(int y = 0; y < height; y++) {
-      //println(computeSD(x,y,20));
-    }
-  }
-  
   //genTestPoints();
   genTriangulationAndStats();
 }
@@ -89,8 +86,7 @@ void setup() {
 void genTriangulationAndStats() {
   triangulation.bowyerWatson(points, tris);
   
-  float pixelToWorld = sampling.worldWidth / img.width;
-  stats = new ImageStats(img, tris, pixelToWorld);
+  stats = new ImageStats(img, tris);
   initVertToTris();
 }
 
@@ -151,7 +147,7 @@ float computeScore(ArrayList<Triangle> tris) {
 }
 
 int getClosestPointIndexToMousePos() {
-  PVector mousePos = new PVector(mouseX, mouseY);
+  PVector mousePos = new PVector(pixelToWorld(mouseX), pixelToWorld(mouseY));
   int minPosIndx = -1;
   float minDist = Float.MAX_VALUE;
   for(int i = 0; i < points.size(); i++) {
@@ -190,19 +186,21 @@ void mouseClicked() {
   //  points.remove(i);
   //}
   
-  //int minPosIndx = getClosestPointIndexToMousePos();
-
+  int minPosIndx = getClosestPointIndexToMousePos();
+  PVector p = points.get(minPosIndx);
+  AnimatedPoint newP = new AnimatedPoint(worldToPixel(p.x), worldToPixel(p.y), 10);
+  newP.bounce(2);
+  animatedPoints.add(newP);
   //if(minPosIndx != -1) {
   //  points.remove(minPosIndx);
   //}
   
   //genTriangulationAndStats();
   
-  println("computeSD(..)=" + computeSD(mouseX, mouseY, 10));
-  
+ 
   //save("test.png");
   
-  drawTris = !drawTris;
+  //drawTris = !drawTris;
 }
 
 float clamp01(float val) {
@@ -224,14 +222,13 @@ void draw() {
   if(drawTris)
     drawTris();
   
-  int posIndex = getClosestPointIndexToMousePos();
-  if(posIndex != -1) {
-    PVector closest = points.get(posIndex);
-    fill(255,0,0);
-    circle(closest.x, closest.y, 3);
-  }
+  //drawClosestVertex();
+  
+  drawAnimatedPoints();
   
   popMatrix();
+  
+  println("FPS: " + frameRate);
 }
 
 void drawTris() {
@@ -240,39 +237,44 @@ void drawTris() {
   PVector tmp1 = new PVector();
   PVector tmp2 = new PVector();
   PVector tmp3 = new PVector();
+  strokeWeight(.1f);
+  stroke(255);
+  noStroke();
   for(Triangle tri : tris) {
     
     //stroke(255);
-    strokeWeight(.1f);
+    
     //noStroke();
     
     worldToPixel(tri.p1, tmp1);
     worldToPixel(tri.p2, tmp2);
     worldToPixel(tri.p3, tmp3);
     
-    float centerWorldX = (tri.p1.x + tri.p2.x + tri.p3.x) / 3f;
-    float centerWorldY = (tri.p1.y + tri.p2.y + tri.p3.y) / 3f;
-    int pixelX = round(worldToPixel(centerWorldX));
-    int pixelY = round(worldToPixel(centerWorldY));
+    //float centerWorldX = (tri.p1.x + tri.p2.x + tri.p3.x) / 3f;
+    //float centerWorldY = (tri.p1.y + tri.p2.y + tri.p3.y) / 3f;
+    //int pixelX = round(worldToPixel(centerWorldX));
+    //int pixelY = round(worldToPixel(centerWorldY));
     
-    color col = img.get(pixelX, pixelY);
-    fill(col);
-    
-    //stroke(col);
-    stroke(255);
     TriangleStats triStats = stats.triStats.get(tri);
     fill(triStats.avgR, triStats.avgG, triStats.avgB);
     
-    float sdIntensity = clamp01((triStats.avgSD - stats.minSD) / (stats.maxSD - stats.minSD)) * 255;
+    //float sdIntensity = clamp01((triStats.avgSD - stats.minSD) / (stats.maxSD - stats.minSD)) * 255;
     //fill(sdIntensity, sdIntensity, sdIntensity);
-    float normalizedScore = (triStats.avgSD - stats.minSD) / (stats.maxSD - stats.minSD);
-    //fill(normalizedScore * 255);
     
     //fill(tri.c);
     triangle(tmp1.x, tmp1.y, tmp2.x, tmp2.y, tmp3.x, tmp3.y);
     
-    Circle c = tri.circumCenter;
+    //Circle c = tri.circumCenter;
     //circle(c.center.x, c.center.y, c.radius * 2);
+  }
+}
+
+void drawClosestVertex() {
+  int posIndex = getClosestPointIndexToMousePos();
+  if(posIndex != -1) {
+    PVector closest = points.get(posIndex);
+    fill(255,0,0);
+    circle(worldToPixel(closest.x), worldToPixel(closest.y), 3);
   }
 }
 
@@ -281,6 +283,13 @@ void drawPoints() {
     strokeWeight(4);
     stroke(255);
     point(p.x, p.y);
+  }
+}
+
+void drawAnimatedPoints() {
+  for(AnimatedPoint p : animatedPoints) {
+    p.update(frameLength);
+    p.draw();
   }
 }
 
