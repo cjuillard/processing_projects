@@ -28,18 +28,8 @@ class AnimatedLine {
   }
   
   void startAnimation() {
-    drawDuration = random(.5f, 1.25f);
+    drawDuration = random(.35f, .75f);
     drawTime = 0;
-  }
-  
-  
-  float getSWeight() {
-    if(drawDuration <= 0) {
-      return sWeight;
-    }
-    
-    float t = clamp01(drawTime / drawDuration);
-    return outBack(t) * sWeight;
   }
   
   // Code based off of https://github.com/AurelienRibon/universal-tween-engine ...
@@ -65,15 +55,17 @@ class AnimatedLine {
   void draw() {
     if(drawDuration <= 0)
       return;
-      
+    
+    strokeWeight(sWeight);
+    stroke(255);
     float t = clamp01(drawTime / drawDuration);
     if(t >= 1) {
-      line(p1.x, p1.y, p2.x, p2.y);
+      line(p1Pixel.x, p1Pixel.y, p2Pixel.x, p2Pixel.y);
     } else {
-      tmpP.set(p2).sub(p1).mult(t);
-      tmpP.add(p1);
+      tmpP.set(p2Pixel).sub(p1Pixel).mult(t);
+      tmpP.add(p1Pixel);
       
-      line(p1.x, p1.y, tmpP.x, tmpP.y);
+      line(p1Pixel.x, p1Pixel.y, tmpP.x, tmpP.y);
     }
   }
   

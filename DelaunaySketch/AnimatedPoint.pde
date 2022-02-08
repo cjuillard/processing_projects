@@ -28,7 +28,7 @@ class AnimatedPoint {
   }
   
   void bounce() {
-    bounceDuration = random(.5f, 1.25f);
+    bounceDuration = random(.3f, .5f);
     bounceTime = 0;
   }
   
