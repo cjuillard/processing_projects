@@ -1,17 +1,30 @@
 class AnimatedPoint {
   PVector pos = new PVector();
+  PVector pixelPos = new PVector();
   float bounceDuration;
   float bounceTime = 0;
   float size;
-  public AnimatedPoint(float x, float y, float size) {
-    pos.set(x, y);
+  public AnimatedPoint(float worldX, float worldY, float size) {
+    pos.set(worldX, worldY);
+    pixelPos.set(worldToPixel(worldX), worldToPixel(worldY));
     this.size = size;
   }
   
-  void update(float timeStep) {
+  public AnimatedPoint(PVector worldPos, float size)  {
+    this(worldPos.x, worldPos.y, size);
+  }
+  
+  boolean update(float timeStep) {
+    boolean completedAnim = false; 
     if(bounceDuration > 0) {
+      float prevTime = bounceTime;
       bounceTime += timeStep;
+      if(prevTime < bounceDuration && bounceTime >= bounceDuration) {
+        completedAnim = true;
+      }
     }
+    
+    return completedAnim;
   }
   
   void bounce(float duration) {

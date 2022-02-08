@@ -2,10 +2,10 @@ PoissonDiscSampling sampling;
 VariablePoissonDiscSampling variableSampling;
 DelaunayTriangulation triangulation = new DelaunayTriangulation();
 ArrayList<PVector> points = new ArrayList<PVector>();
-ArrayList<AnimatedPoint> animatedPoints = new ArrayList<AnimatedPoint>();
 ArrayList<Triangle> tris = new ArrayList<Triangle>();
 ImageStats stats;
 HashMap<PVector, ArrayList<Triangle>> vertexToTris = new HashMap<PVector, ArrayList<Triangle>>();
+HashMap<PVector, AnimatedPoint> animatedPoints = new HashMap<PVector, AnimatedPoint>();
 
 float worldToPixel = 1;
 float scale = 1f;
@@ -188,9 +188,9 @@ void mouseClicked() {
   
   int minPosIndx = getClosestPointIndexToMousePos();
   PVector p = points.get(minPosIndx);
-  AnimatedPoint newP = new AnimatedPoint(worldToPixel(p.x), worldToPixel(p.y), 10);
+  AnimatedPoint newP = new AnimatedPoint(p, 10);
   newP.bounce(2);
-  animatedPoints.add(newP);
+  animatedPoints.put(newP.pos, newP);
   //if(minPosIndx != -1) {
   //  points.remove(minPosIndx);
   //}
@@ -287,10 +287,37 @@ void drawPoints() {
 }
 
 void drawAnimatedPoints() {
-  for(AnimatedPoint p : animatedPoints) {
-    p.update(frameLength);
+  ArrayList<AnimatedPoint> pointsToExpand = new ArrayList<AnimatedPoint>();
+  for(AnimatedPoint p : animatedPoints.values()) {
+    boolean finishedAnim = p.update(frameLength);
+    if(finishedAnim) {
+      pointsToExpand.add(p);
+    }
     p.draw();
   }
+  
+  for(AnimatedPoint p : pointsToExpand) {
+    ArrayList<Triangle> tris = vertexToTris.get(p.pos);
+    for(Triangle tri : tris) {
+      if(!tri.p1.equals(p))
+        tryExpandingP(tri.p1.x, tri.p1.y);
+        
+      if(!tri.p2.equals(p))
+        tryExpandingP(tri.p2.x, tri.p2.y);
+      
+      if(!tri.p3.equals(p))
+        tryExpandingP(tri.p3.x, tri.p3.y);
+    }
+  }
+}
+
+void tryExpandingP(float x, float y) {
+  AnimatedPoint newP = new AnimatedPoint(worldToPixel(x), worldToPixel(y), 10);
+  if(animatedPoints.containsKey(newP.pos)) {
+    return;
+  }
+  newP.bounce(2);
+  animatedPoints.put(newP.pos, newP);
 }
 
 float worldToPixel(float worldComp) {
