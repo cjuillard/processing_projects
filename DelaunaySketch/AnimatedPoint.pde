@@ -27,8 +27,8 @@ class AnimatedPoint {
     return completedAnim;
   }
   
-  void bounce(float duration) {
-    bounceDuration = duration;
+  void bounce() {
+    bounceDuration = random(.5f, 1.25f);
     bounceTime = 0;
   }
   
@@ -61,6 +61,6 @@ class AnimatedPoint {
   }
 
   void draw() {
-    circle(pos.x, pos.y, getSize());
+    circle(pixelPos.x, pixelPos.y, getSize());
   }
 }

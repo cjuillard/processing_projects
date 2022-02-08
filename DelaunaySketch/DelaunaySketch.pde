@@ -5,7 +5,9 @@ ArrayList<PVector> points = new ArrayList<PVector>();
 ArrayList<Triangle> tris = new ArrayList<Triangle>();
 ImageStats stats;
 HashMap<PVector, ArrayList<Triangle>> vertexToTris = new HashMap<PVector, ArrayList<Triangle>>();
+
 HashMap<PVector, AnimatedPoint> animatedPoints = new HashMap<PVector, AnimatedPoint>();
+HashMap<Edge, AnimatedLine> animatedLines = new HashMap<Edge, AnimatedLine>();  // TODO NO_COMMIT populate this in the point expansion
 
 float worldToPixel = 1;
 float scale = 1f;
@@ -188,8 +190,8 @@ void mouseClicked() {
   
   int minPosIndx = getClosestPointIndexToMousePos();
   PVector p = points.get(minPosIndx);
-  AnimatedPoint newP = new AnimatedPoint(p, 10);
-  newP.bounce(2);
+  AnimatedPoint newP = new AnimatedPoint(p, 5);
+  newP.bounce();
   animatedPoints.put(newP.pos, newP);
   //if(minPosIndx != -1) {
   //  points.remove(minPosIndx);
@@ -312,11 +314,11 @@ void drawAnimatedPoints() {
 }
 
 void tryExpandingP(float x, float y) {
-  AnimatedPoint newP = new AnimatedPoint(worldToPixel(x), worldToPixel(y), 10);
+  AnimatedPoint newP = new AnimatedPoint(x, y, 5);
   if(animatedPoints.containsKey(newP.pos)) {
     return;
   }
-  newP.bounce(2);
+  newP.bounce();
   animatedPoints.put(newP.pos, newP);
 }
 
