@@ -226,11 +226,12 @@ void draw() {
   
   //drawClosestVertex();
   
+  drawAnimatedLines();
   drawAnimatedPoints();
   
   popMatrix();
   
-  println("FPS: " + frameRate);
+  //println("FPS: " + frameRate);
 }
 
 void drawTris() {
@@ -301,23 +302,57 @@ void drawAnimatedPoints() {
   for(AnimatedPoint p : pointsToExpand) {
     ArrayList<Triangle> tris = vertexToTris.get(p.pos);
     for(Triangle tri : tris) {
-      if(!tri.p1.equals(p))
-        tryExpandingP(tri.p1.x, tri.p1.y);
-        
-      if(!tri.p2.equals(p))
-        tryExpandingP(tri.p2.x, tri.p2.y);
-      
-      if(!tri.p3.equals(p))
-        tryExpandingP(tri.p3.x, tri.p3.y);
+      tryExpandingP(p.pos, tri);
     }
   }
 }
 
-void tryExpandingP(float x, float y) {
-  AnimatedPoint newP = new AnimatedPoint(x, y, 5);
-  if(animatedPoints.containsKey(newP.pos)) {
+void drawAnimatedLines() {
+  ArrayList<AnimatedLine> linesToExpand = new ArrayList<AnimatedLine>();
+  for(AnimatedLine l : animatedLines.values()) {
+    boolean finishedAnim = l.update(frameLength);
+    if(finishedAnim) {
+      linesToExpand.add(l);
+    }
+    l.draw();
+  }
+  
+  for(AnimatedLine l : linesToExpand) {
+    tryAddingP(l.p2);
+  }
+}
+
+void tryExpandingP(PVector p, Triangle tri) {
+  if(tri.p1.equals(p)) {
+    tryAddLine(tri.p1, tri.p2);
+    tryAddLine(tri.p1, tri.p3);
+  } else if(tri.p2.equals(p)) {
+    tryAddLine(tri.p2, tri.p1);
+    tryAddLine(tri.p2, tri.p3);
+  } else {
+    tryAddLine(tri.p3, tri.p1);
+    tryAddLine(tri.p3, tri.p2);
+  }
+}
+
+void tryAddLine(PVector p1, PVector p2) {
+  Edge e = new Edge(p1, p2);
+  AnimatedLine l = animatedLines.get(e);
+  if(l != null)
+    return;
+    
+  l = new AnimatedLine(p1, p2, 1.5f);
+  l.startAnimation();
+  println("new line added");
+  animatedLines.put(e, l);
+}
+
+void tryAddingP(PVector p) {
+  if(animatedPoints.containsKey(p)) {
     return;
   }
+  
+  AnimatedPoint newP = new AnimatedPoint(p, 5);
   newP.bounce();
   animatedPoints.put(newP.pos, newP);
 }
