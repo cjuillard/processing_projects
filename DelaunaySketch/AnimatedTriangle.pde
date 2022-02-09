@@ -1,17 +1,17 @@
-class AnimatedLine {
-  PVector p1 = new PVector();
-  PVector p2 = new PVector();
+class AnimatedTriangle {
+  Triangle tri;
   PVector p1Pixel = new PVector();
   PVector p2Pixel = new PVector();
+  PVector p3Pixel = new PVector();
   float drawDuration;
   float drawTime = 0;
-  float sWeight;
-  public AnimatedLine(PVector p1, PVector p2, float sWeight) {
-    this.p1.set(p1);
-    this.p2.set(p2);
-    worldToPixel(p1, p1Pixel);
-    worldToPixel(p2, p2Pixel);
-    this.sWeight = sWeight;
+  color c;
+  public AnimatedTriangle(Triangle tri, color c) {
+    this.tri = tri;
+    this.c = c;
+    worldToPixel(tri.p1, p1Pixel);
+    worldToPixel(tri.p2, p2Pixel);
+    worldToPixel(tri.p3, p3Pixel);
   }
   
   boolean update(float timeStep) {
@@ -30,27 +30,20 @@ class AnimatedLine {
   boolean isAnimationComplete() {
     return drawDuration > 0 && drawTime > drawDuration;
   }
+  
   void startAnimation() {
     drawDuration = random(.35f, .75f);
     drawTime = 0;
   }
   
-  PVector tmpP = new PVector();
   void draw() {
     if(drawDuration <= 0)
       return;
     
-    strokeWeight(sWeight);
-    stroke(255);
     float t = clamp01(drawTime / drawDuration);
-    if(t >= 1) {
-      line(p1Pixel.x, p1Pixel.y, p2Pixel.x, p2Pixel.y);
-    } else {
-      tmpP.set(p2Pixel).sub(p1Pixel).mult(t);
-      tmpP.add(p1Pixel);
-      
-      line(p1Pixel.x, p1Pixel.y, tmpP.x, tmpP.y);
-    }
+    noStroke();
+    fill(c);
+    triangle(p1Pixel.x, p1Pixel.y, p2Pixel.x, p2Pixel.y, p3Pixel.x, p3Pixel.y);
   }
   
   

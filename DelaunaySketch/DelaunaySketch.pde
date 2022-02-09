@@ -7,7 +7,8 @@ ImageStats stats;
 HashMap<PVector, ArrayList<Triangle>> vertexToTris = new HashMap<PVector, ArrayList<Triangle>>();
 
 HashMap<PVector, AnimatedPoint> animatedPoints = new HashMap<PVector, AnimatedPoint>();
-HashMap<Edge, AnimatedLine> animatedLines = new HashMap<Edge, AnimatedLine>();  // TODO NO_COMMIT populate this in the point expansion
+HashMap<Edge, AnimatedLine> animatedLines = new HashMap<Edge, AnimatedLine>();
+HashMap<Triangle, AnimatedTriangle> animatedTris = new HashMap<Triangle, AnimatedTriangle>();
 
 float worldToPixel = 1;
 float scale = 1f;
@@ -190,9 +191,10 @@ void mouseClicked() {
   
   int minPosIndx = getClosestPointIndexToMousePos();
   PVector p = points.get(minPosIndx);
-  AnimatedPoint newP = new AnimatedPoint(p, 5);
-  newP.bounce();
-  animatedPoints.put(newP.pos, newP);
+  tryExpandingP(p);
+  //AnimatedPoint newP = new AnimatedPoint(p, 5);
+  //newP.bounce();
+  //animatedPoints.put(newP.pos, newP);
   //if(minPosIndx != -1) {
   //  points.remove(minPosIndx);
   //}
@@ -214,18 +216,15 @@ void draw() {
   //background(0);
   image(img, 0, 0);
   
-  //float offsetX = (width - sampling.worldWidth) * 0.5f;
-  //float offsetY = (height - sampling.worldHeight) * 0.5f;
   pushMatrix();
-  //translate(offsetX, offsetY);
   noFill();
-  //drawPoints();
   
-  if(drawTris)
-    drawTris();
+  //if(drawTris)
+  //  drawTris();
   
   //drawClosestVertex();
   
+  drawAnimatedTris();
   drawAnimatedLines();
   drawAnimatedPoints();
   
@@ -245,26 +244,13 @@ void drawTris() {
   noStroke();
   for(Triangle tri : tris) {
     
-    //stroke(255);
-    
-    //noStroke();
-    
     worldToPixel(tri.p1, tmp1);
     worldToPixel(tri.p2, tmp2);
     worldToPixel(tri.p3, tmp3);
     
-    //float centerWorldX = (tri.p1.x + tri.p2.x + tri.p3.x) / 3f;
-    //float centerWorldY = (tri.p1.y + tri.p2.y + tri.p3.y) / 3f;
-    //int pixelX = round(worldToPixel(centerWorldX));
-    //int pixelY = round(worldToPixel(centerWorldY));
-    
     TriangleStats triStats = stats.triStats.get(tri);
     fill(triStats.avgR, triStats.avgG, triStats.avgB);
     
-    //float sdIntensity = clamp01((triStats.avgSD - stats.minSD) / (stats.maxSD - stats.minSD)) * 255;
-    //fill(sdIntensity, sdIntensity, sdIntensity);
-    
-    //fill(tri.c);
     triangle(tmp1.x, tmp1.y, tmp2.x, tmp2.y, tmp3.x, tmp3.y);
     
     //Circle c = tri.circumCenter;
@@ -290,6 +276,7 @@ void drawPoints() {
 }
 
 void drawAnimatedPoints() {
+  fill(0);
   ArrayList<AnimatedPoint> pointsToExpand = new ArrayList<AnimatedPoint>();
   for(AnimatedPoint p : animatedPoints.values()) {
     boolean finishedAnim = p.update(frameLength);
@@ -297,13 +284,6 @@ void drawAnimatedPoints() {
       pointsToExpand.add(p);
     }
     p.draw();
-  }
-  
-  for(AnimatedPoint p : pointsToExpand) {
-    ArrayList<Triangle> tris = vertexToTris.get(p.pos);
-    for(Triangle tri : tris) {
-      tryExpandingP(p.pos, tri);
-    }
   }
 }
 
@@ -318,33 +298,74 @@ void drawAnimatedLines() {
   }
   
   for(AnimatedLine l : linesToExpand) {
-    tryAddingP(l.p2);
+    tryExpandingP(l.p2);
   }
 }
 
-void tryExpandingP(PVector p, Triangle tri) {
+void drawAnimatedTris() {
+  for(AnimatedTriangle tri : animatedTris.values()) {
+    tri.draw();
+  }
+}
+
+void tryExpandingP(PVector p) {
+  tryAddingP(p);
+  
+  ArrayList<Triangle> tris = vertexToTris.get(p);
+  for(Triangle tri : tris) {
+    if(!tryExpandingP(p, tri)) {
+      AnimatedLine l1 = animatedLines.get(new Edge(tri.p1, tri.p2));
+      AnimatedLine l2 = animatedLines.get(new Edge(tri.p2, tri.p3));
+      AnimatedLine l3 = animatedLines.get(new Edge(tri.p3, tri.p1));
+      
+      if(l1 != null && l2 != null && l3 != null && 
+          l1.isAnimationComplete() && l2.isAnimationComplete() && l3.isAnimationComplete()) {
+        tryAddingTri(tri);
+      }
+    }
+  }
+}
+
+boolean tryExpandingP(PVector p, Triangle tri) {
+  boolean r = false;
   if(tri.p1.equals(p)) {
-    tryAddLine(tri.p1, tri.p2);
-    tryAddLine(tri.p1, tri.p3);
+    r |= tryAddLine(tri.p1, tri.p2);
+    r |= tryAddLine(tri.p1, tri.p3);
   } else if(tri.p2.equals(p)) {
-    tryAddLine(tri.p2, tri.p1);
-    tryAddLine(tri.p2, tri.p3);
+    r |= tryAddLine(tri.p2, tri.p1);
+    r |= tryAddLine(tri.p2, tri.p3);
   } else {
-    tryAddLine(tri.p3, tri.p1);
-    tryAddLine(tri.p3, tri.p2);
+    r |= tryAddLine(tri.p3, tri.p1);
+    r |= tryAddLine(tri.p3, tri.p2);
   }
+  
+  return r;
 }
 
-void tryAddLine(PVector p1, PVector p2) {
+boolean tryAddLine(PVector p1, PVector p2) {
   Edge e = new Edge(p1, p2);
   AnimatedLine l = animatedLines.get(e);
   if(l != null)
-    return;
+    return false;
     
   l = new AnimatedLine(p1, p2, 1.5f);
   l.startAnimation();
-  println("new line added");
   animatedLines.put(e, l);
+  
+  return true;
+}
+
+boolean tryAddingTri(Triangle tri) {
+  AnimatedTriangle t = animatedTris.get(tri);
+  if(t != null)
+    return false;
+    
+  TriangleStats triStats = stats.triStats.get(tri);
+  t = new AnimatedTriangle(tri, color(triStats.avgR, triStats.avgG, triStats.avgB));
+  t.startAnimation();
+  animatedTris.put(tri, t);
+  
+  return true;
 }
 
 void tryAddingP(PVector p) {
