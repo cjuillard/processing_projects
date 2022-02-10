@@ -57,16 +57,16 @@ void setup() {
   sampling = new PoissonDiscSampling(worldWidth, worldHeight, 15);
   sampling.genPoints(points);
   
-  final float minRadius = 4;
-  final float maxRadius = 25;
+  final float minRadius = 6;
+  final float maxRadius = 50;
   final float sdDist = 4;
   RadiusProvider radiusProvider = new RadiusProvider() {
     private float minSDFound = Float.MAX_VALUE;
     private float maxSDFound = Float.MIN_VALUE;
     public float getRadius(float worldX, float worldY) {
       float sd = computeSD(worldX, worldY, sdDist);
-      float minSD = 2;
-      float maxSD = 70;
+      float minSD = 0;
+      float maxSD = 50;
       float t = (sd - minSD) / (maxSD - minSD);
       t = clamp01(t);
       
@@ -87,6 +87,7 @@ void setup() {
   };
   variableSampling = new VariablePoissonDiscSampling(worldWidth, worldHeight, minRadius, maxRadius, radiusProvider);
   variableSampling.genPoints(points);
+  println("NumPoints generated: " + points.size()); 
   
   //genTestPoints();
   genTriangulationAndStats();
@@ -164,7 +165,7 @@ void draw() {
   pushMatrix();
   noFill();
   
-  drawPoints();
+  //drawPoints();
   //if(drawTris)
   //  drawTris();
   
