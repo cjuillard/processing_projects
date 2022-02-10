@@ -5,10 +5,12 @@ class AnimatedTriangle {
   PVector p3Pixel = new PVector();
   float drawDuration;
   float drawTime = 0;
-  color c;
+  float r,g,b;
   public AnimatedTriangle(Triangle tri, color c) {
     this.tri = tri;
-    this.c = c;
+    r = red(c);
+    g = green(c);
+    b = blue(c);
     worldToPixel(tri.p1, p1Pixel);
     worldToPixel(tri.p2, p2Pixel);
     worldToPixel(tri.p3, p3Pixel);
@@ -42,7 +44,7 @@ class AnimatedTriangle {
     
     float t = clamp01(drawTime / drawDuration);
     noStroke();
-    fill(c);
+    fill(lerp(255, r, t), lerp(255, g, t), lerp(255, b, t), 255);
     triangle(p1Pixel.x, p1Pixel.y, p2Pixel.x, p2Pixel.y, p3Pixel.x, p3Pixel.y);
   }
   

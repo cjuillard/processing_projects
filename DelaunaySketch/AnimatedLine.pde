@@ -40,9 +40,14 @@ class AnimatedLine {
     if(drawDuration <= 0)
       return;
     
-    strokeWeight(sWeight);
-    stroke(255);
+    
     float t = clamp01(drawTime / drawDuration);
+    float fadeTime = 0.5f;
+    float weight = lerp(sWeight, 0, clamp01((drawTime - drawDuration) / fadeTime));
+    if(weight == 0)
+      return;
+    strokeWeight(weight);
+    stroke(255);
     if(t >= 1) {
       line(p1Pixel.x, p1Pixel.y, p2Pixel.x, p2Pixel.y);
     } else {

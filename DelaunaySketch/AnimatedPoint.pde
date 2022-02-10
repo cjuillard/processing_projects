@@ -37,8 +37,15 @@ class AnimatedPoint {
       return size;
     }
     
-    float t = clamp01(bounceTime / bounceDuration);
-    return outBack(t) * size;
+    if(bounceTime > bounceDuration) {
+      float fadeTime = bounceTime - bounceDuration;
+      float t = clamp01(fadeTime / (bounceDuration * 0.5f));
+      return lerp(size, 0, t);
+    } else {
+      float t = clamp01(bounceTime / bounceDuration );
+      return outBack(t) * size;
+    }
+    
   }
   
   // Code based off of https://github.com/AurelienRibon/universal-tween-engine ...

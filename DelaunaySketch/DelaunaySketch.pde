@@ -12,7 +12,7 @@ HashMap<Triangle, AnimatedTriangle> animatedTris = new HashMap<Triangle, Animate
 
 float worldToPixel = 1;
 float scale = 1f;
-float worldPad = 50;
+float worldPad = 100;
 float worldWidth;
 float worldHeight;
 float frameLength = 1/60f;
@@ -277,6 +277,8 @@ void drawPoints() {
 
 void drawAnimatedPoints() {
   fill(0);
+  stroke(255);
+  strokeWeight(1);
   ArrayList<AnimatedPoint> pointsToExpand = new ArrayList<AnimatedPoint>();
   for(AnimatedPoint p : animatedPoints.values()) {
     boolean finishedAnim = p.update(frameLength);
@@ -304,6 +306,7 @@ void drawAnimatedLines() {
 
 void drawAnimatedTris() {
   for(AnimatedTriangle tri : animatedTris.values()) {
+    tri.update(frameLength);
     tri.draw();
   }
 }
@@ -348,7 +351,7 @@ boolean tryAddLine(PVector p1, PVector p2) {
   if(l != null)
     return false;
     
-  l = new AnimatedLine(p1, p2, 1.5f);
+  l = new AnimatedLine(p1, p2, 1f);
   l.startAnimation();
   animatedLines.put(e, l);
   
