@@ -1,11 +1,15 @@
+// Utilities
 PoissonDiscSampling sampling;
 VariablePoissonDiscSampling variableSampling;
 DelaunayTriangulation triangulation = new DelaunayTriangulation();
+
+// Core data
 ArrayList<PVector> points = new ArrayList<PVector>();
 ArrayList<Triangle> tris = new ArrayList<Triangle>();
 ImageStats stats;
 HashMap<PVector, ArrayList<Triangle>> vertexToTris = new HashMap<PVector, ArrayList<Triangle>>();
 
+// Animation objects
 HashMap<PVector, AnimatedPoint> animatedPoints = new HashMap<PVector, AnimatedPoint>();
 HashMap<Edge, AnimatedLine> animatedLines = new HashMap<Edge, AnimatedLine>();
 HashMap<Triangle, AnimatedTriangle> animatedTris = new HashMap<Triangle, AnimatedTriangle>();
@@ -15,32 +19,34 @@ float scale = 1f;
 float worldPad = 100;
 float worldWidth;
 float worldHeight;
-float frameLength = 1/60f;
+float frameLength = 1/30f;
 PImage img;
 
-Triangle testTri;
+boolean saveFrames = false;
+
+void settings() {
+  String[] paths = new String[] {
+    "sample_images/1.jpg",
+    "sample_images/2.jpg",
+    "sample_images/3.jpg",
+    "sample_images/3_tiny.jpg",
+    "sample_images/3_standardsize.jpg",
+    "test.png",
+    "test_large.png",
+    "test2.jpg",
+    "test3.jpg",
+  };
+  loadSource(paths[4]);
+}
+
+void loadSource(String path) {
+  img = loadImage(path);
+  size(img.width, img.height);
+}
 
 void setup() {
-  // Size should be set according to image's size - calculations make this assumption
-  //size(640, 640);
-  //size(2048, 1375);  // 1.jpg
-  //size(2048, 1536);  // 2.jpg
-  //size(2048, 1360);  // 3.jpg
-  size(512, 340);  // 3_tiny.jpg
-  //size(512, 512);  // test1.png + test3.jpg
-  //size(1024, 1024);  // test_large.png
   stroke(255);
   noFill();
-  
-  //img = loadImage("../Loops2/Loop2/test.jpg");
-  //img = loadImage("test.png");
-  //img = loadImage("test_large.png");
-  //img = loadImage("test2.jpg");
-  //img = loadImage("test3.jpg");
-  //img = loadImage("sample_images/1.jpg");
-  //img = loadImage("sample_images/2.jpg");
-  //img = loadImage("sample_images/3.jpg");
-  img = loadImage("sample_images/3_tiny.jpg");
   
   randomSeed(0);
   //sampling = new PoissonDiscSampling(width * scale, height * scale, 10);
@@ -120,35 +126,6 @@ void genTestPoints() {
   }
 }
 
-float computeScore(ArrayList<Triangle> tris) {
-  int totalNumPixels = 0;
-  float currSD = 0;
-  for(Triangle tri : tris) {
-    TriangleStats stat = stats.getStat(tri);
-    if(stat.imgPixelsInside == 0) {
-      return 0;  // Force these to not be removed
-      
-      //int biasPixels = 10;
-      //currSD = totalNumPixels == 0 ? stats.maxSD : lerp(currSD, stats.minSD, biasPixels / (float)totalNumPixels);
-      //totalNumPixels += biasPixels;  // bias them towards getting removed
-      //continue;
-      
-      //return Float.MAX_VALUE;
-      
-    }
-    
-    if(totalNumPixels == 0) {
-      currSD = stat.avgSD;
-      totalNumPixels += stat.imgPixelsInside;
-    } else {
-      totalNumPixels += stat.imgPixelsInside;
-      currSD = lerp(currSD, stat.avgSD, stat.imgPixelsInside / (float)totalNumPixels);
-    }
-  }
-  
-  return currSD;
-}
-
 int getClosestPointIndexToMousePos() {
   PVector mousePos = new PVector(pixelToWorld(mouseX), pixelToWorld(mouseY));
   int minPosIndx = -1;
@@ -165,46 +142,15 @@ int getClosestPointIndexToMousePos() {
 }
 void mouseClicked() {
   
-  //Collections.sort(points, new Comparator<PVector>(){
-  //  @Override
-  //  public int compare(PVector o1, PVector o2) {
-  //    ArrayList<Triangle> tris1 = vertexToTris.get(o1);
-  //    ArrayList<Triangle> tris2 = vertexToTris.get(o2);
+  if(mouseButton == LEFT) {
+    int minPosIndx = getClosestPointIndexToMousePos();
+    PVector p = points.get(minPosIndx);
+    if(tryExpandingP(p)) {
       
-  //    float s1 = computeScore(tris1);
-  //    float s2 = computeScore(tris2);
-  //    float delta = s1 - s2;
-  //    if(delta == 0)
-  //      return 0;
-  //    if(delta < 0) 
-  //      return 1;
-      
-  //    return -1;
-  //  }
-  //});
-  
-  //for(int i = points.size() - 1, n = points.size() - floor(.1f * points.size()); i >= n; i--) {
-  //  ArrayList<Triangle> tris1 = vertexToTris.get(points.get(i));
-  //  //println(computeScore(tris1));
-  //  points.remove(i);
-  //}
-  
-  int minPosIndx = getClosestPointIndexToMousePos();
-  PVector p = points.get(minPosIndx);
-  tryExpandingP(p);
-  //AnimatedPoint newP = new AnimatedPoint(p, 5);
-  //newP.bounce();
-  //animatedPoints.put(newP.pos, newP);
-  //if(minPosIndx != -1) {
-  //  points.remove(minPosIndx);
-  //}
-  
-  //genTriangulationAndStats();
-  
- 
-  //save("test.png");
-  
-  //drawTris = !drawTris;
+    }
+  } else if(mouseButton == RIGHT) {
+    saveFrames = !saveFrames;
+  }
 }
 
 float clamp01(float val) {
@@ -213,12 +159,12 @@ float clamp01(float val) {
 
 boolean drawTris = true;
 void draw() {
-  //background(0);
   image(img, 0, 0);
   
   pushMatrix();
   noFill();
   
+  //drawPoints();
   //if(drawTris)
   //  drawTris();
   
@@ -230,7 +176,13 @@ void draw() {
   
   popMatrix();
   
-  //println("FPS: " + frameRate);
+  if(saveFrames) {
+    saveFrame("output/delaunay_####.png");
+    fill(255, 0, 0);
+  } else {
+    fill(0, 255, 0);
+  }
+  ellipse(width / 2f, height - 50, 20, 20);
 }
 
 void drawTris() {
@@ -271,7 +223,7 @@ void drawPoints() {
   for(PVector p : points) {
     strokeWeight(4);
     stroke(255);
-    point(p.x, p.y);
+    point(worldToPixel(p.x), worldToPixel(p.y));
   }
 }
 
@@ -311,8 +263,8 @@ void drawAnimatedTris() {
   }
 }
 
-void tryExpandingP(PVector p) {
-  tryAddingP(p);
+boolean tryExpandingP(PVector p) {
+  boolean somethingAdded = tryAddingP(p);
   
   ArrayList<Triangle> tris = vertexToTris.get(p);
   for(Triangle tri : tris) {
@@ -323,10 +275,12 @@ void tryExpandingP(PVector p) {
       
       if(l1 != null && l2 != null && l3 != null && 
           l1.isAnimationComplete() && l2.isAnimationComplete() && l3.isAnimationComplete()) {
-        tryAddingTri(tri);
+        somethingAdded |= tryAddingTri(tri);
       }
     }
   }
+  
+  return somethingAdded;
 }
 
 boolean tryExpandingP(PVector p, Triangle tri) {
@@ -371,14 +325,15 @@ boolean tryAddingTri(Triangle tri) {
   return true;
 }
 
-void tryAddingP(PVector p) {
+boolean tryAddingP(PVector p) {
   if(animatedPoints.containsKey(p)) {
-    return;
+    return false;
   }
   
   AnimatedPoint newP = new AnimatedPoint(p, 5);
   newP.bounce();
   animatedPoints.put(newP.pos, newP);
+  return true;
 }
 
 float worldToPixel(float worldComp) {
