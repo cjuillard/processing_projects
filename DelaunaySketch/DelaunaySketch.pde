@@ -164,7 +164,7 @@ void draw() {
   pushMatrix();
   noFill();
   
-  //drawPoints();
+  drawPoints();
   //if(drawTris)
   //  drawTris();
   
@@ -364,9 +364,9 @@ float computeSD(float centerWorldX, float centerWorldY, float pixelDist) {
   double bSum = 0;
   int totalPixels = 0;
   for(int x = minX; x <= maxX; x++) {
-    int testX = max(0, min(img.width, x));
+    int testX = max(0, min(img.width-1, x));
     for(int y = minY; y <= maxY; y++) {
-      int testY = max(0, min(img.height, y));
+      int testY = max(0, min(img.height-1, y));
       color argb = img.get(testX, testY);
       int r = (argb >> 16) & 0xFF;  // Faster way of getting red(argb)
       int g = (argb >> 8) & 0xFF;   // Faster way of getting green(argb)
@@ -392,9 +392,9 @@ float computeSD(float centerWorldX, float centerWorldY, float pixelDist) {
   double gSD = 0;
   double bSD = 0;
   for(int x = minX; x <= maxX; x++) {
-    int testX = max(0, min(img.width, x));
+    int testX = max(0, min(img.width-1, x));
     for(int y = minY; y <= maxY; y++) {
-      int testY = max(0, min(img.height, y));
+      int testY = max(0, min(img.height-1, y));
       
       color argb = img.get(testX, testY);
       int r = (argb >> 16) & 0xFF;

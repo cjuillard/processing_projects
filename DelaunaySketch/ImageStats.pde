@@ -45,9 +45,9 @@ class ImageStats {
     double bSum = 0;
     int totalPixels = 0;
     for(int x = minX; x <= maxX; x++) {
-      int sampleX = max(0, min(img.width, x));
+      int sampleX = max(0, min(img.width-1, x));
       for(int y = minY; y <= maxY; y++) {
-        int sampleY = max(0, min(img.height, y));
+        int sampleY = max(0, min(img.height-1, y));
         
         testPos.set(pixelToWorld(sampleX), pixelToWorld(sampleY));
         if(tri.isInside(testPos)) {
@@ -77,9 +77,9 @@ class ImageStats {
     double gSD = 0;
     double bSD = 0;
     for(int x = minX; x <= maxX; x++) {
-      int sampleX = max(0, min(img.width, x));
+      int sampleX = max(0, min(img.width-1, x));
       for(int y = minY; y <= maxY; y++) {
-        int sampleY = max(0, min(img.height, y));
+        int sampleY = max(0, min(img.height-1, y));
         testPos.set(pixelToWorld(sampleX), pixelToWorld(sampleY));
         if(tri.isInside(testPos)) {
           color argb = img.get(sampleX, sampleY);
