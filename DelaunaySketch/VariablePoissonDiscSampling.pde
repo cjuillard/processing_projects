@@ -1,6 +1,8 @@
 interface RadiusProvider {
   float getRadius(float worldX, float worldY);
 }
+
+// Poisson disc sampling using a variable radius for each of the points that can be computed using RadiusProvider.
 class VariablePoissonDiscSampling {
   float worldWidth, worldHeight;
   float minRadius, maxRadius;
@@ -97,9 +99,6 @@ class VariablePoissonDiscSampling {
       
       if(validSample) {
         hasFoundOneValid = true;
-        int testIndex = col + row * cols;
-        if(testIndex < 0 || testIndex >= grid.length)
-          println("col/row=" + col + "," + row + " --> " + testIndex);
         grid[col + row * cols] = sample;
         active.add(sample);
       }

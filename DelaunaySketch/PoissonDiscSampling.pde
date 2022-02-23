@@ -1,3 +1,4 @@
+// Classic Poisson disc sampling implementation
 class PoissonDiscSampling {
   float worldWidth, worldHeight;
   float radius;
@@ -88,9 +89,6 @@ class PoissonDiscSampling {
       
       if(validSample) {
         hasFoundOneValid = true;
-        int testIndex = col + row * cols;
-        if(testIndex < 0 || testIndex >= grid.length)
-          println("col/row=" + col + "," + row + " --> " + testIndex);
         grid[col + row * cols] = sample;
         active.add(sample);
       }

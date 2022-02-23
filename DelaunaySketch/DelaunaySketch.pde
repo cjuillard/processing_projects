@@ -22,7 +22,13 @@ float worldHeight;
 float frameLength = 1/30f;
 PImage img;
 
+// Controls
 boolean saveFrames = false;
+boolean drawTrisFill = false;
+boolean drawTrisOutline = false;
+boolean drawPoints = false;
+boolean drawCircumCenters = false;
+boolean drawImage = true;
 
 void settings() {
   String[] paths = new String[] {
@@ -36,7 +42,7 @@ void settings() {
     "test2.jpg",
     "test3.jpg",
   };
-  loadSource(paths[4]);
+  loadSource(paths[2]);
 }
 
 void loadSource(String path) {
@@ -49,7 +55,6 @@ void setup() {
   noFill();
   
   randomSeed(0);
-  //sampling = new PoissonDiscSampling(width * scale, height * scale, 10);
   worldWidth = width * scale + 2 * worldPad;
   worldHeight = height * scale + 2 * worldPad;
   worldToPixel = 1;
@@ -80,7 +85,7 @@ void setup() {
       maxSDFound = max(maxSDFound, sd);
       
       return lerp(maxRadius, minRadius, t);
-      //return minRadius + (maxRadius - minRadius) * x / width;  // more sparse the further right we go
+      //return minRadius + (maxRadius - minRadius) * worldX / width;  // more sparse the further right we go
       //return 10;
       
     }
@@ -154,21 +159,50 @@ void mouseClicked() {
   }
 }
 
+void keyPressed()
+{
+  switch(key) {
+    case '1': 
+      drawTrisFill = !drawTrisFill; 
+      break;
+    case '2': 
+      drawTrisOutline = !drawTrisOutline;
+      break;
+    case '3':
+      drawPoints = !drawPoints;
+      break;
+    case '4':
+      drawCircumCenters = !drawCircumCenters;
+      break;
+    case '5':
+      drawImage = !drawImage;
+      break;
+    case 'r': 
+      animatedPoints.clear();
+      animatedLines.clear();
+      animatedTris.clear();
+      break;
+  }
+}
+
 float clamp01(float val) {
   return max(0, min(1, val));
 }
 
-boolean drawTris = true;
 void draw() {
-  image(img, 0, 0);
+  if(drawImage) {
+    image(img, 0, 0);
+  } else {
+    background(0);
+  }
+  
   
   pushMatrix();
   noFill();
   
-  //drawPoints();
-  //if(drawTris)
-  //  drawTris();
-  
+  if(drawTrisFill || drawTrisOutline) drawTris();
+  if(drawPoints) drawPoints();
+  if(drawCircumCenters) drawCircumCenters();
   //drawClosestVertex();
   
   drawAnimatedTris();
@@ -187,14 +221,22 @@ void draw() {
 }
 
 void drawTris() {
-  strokeWeight(2);
-  
   PVector tmp1 = new PVector();
   PVector tmp2 = new PVector();
   PVector tmp3 = new PVector();
-  strokeWeight(.1f);
-  stroke(255);
-  noStroke();
+  
+  if(drawTrisOutline) {
+    strokeWeight(1);
+    stroke(255);
+  } else {
+    noStroke();
+  }
+    
+  if(!drawTrisFill) {
+    noFill();
+  }
+  
+    
   for(Triangle tri : tris) {
     
     worldToPixel(tri.p1, tmp1);
@@ -202,12 +244,23 @@ void drawTris() {
     worldToPixel(tri.p3, tmp3);
     
     TriangleStats triStats = stats.triStats.get(tri);
-    fill(triStats.avgR, triStats.avgG, triStats.avgB);
+    if(drawTrisFill)
+      fill(triStats.avgR, triStats.avgG, triStats.avgB);
     
     triangle(tmp1.x, tmp1.y, tmp2.x, tmp2.y, tmp3.x, tmp3.y);
+  }
+}
+
+void drawCircumCenters() { 
+  PVector tmp = new PVector();
+  strokeWeight(.5f);
+  stroke(255);
+  noFill();
+  for(Triangle tri : tris) {
+    Circle c = tri.circumCenter;    
+    worldToPixel(c.center, tmp);
     
-    //Circle c = tri.circumCenter;
-    //circle(c.center.x, c.center.y, c.radius * 2);
+    circle(tmp.x, tmp.y, c.radius * 2 * worldToPixel);
   }
 }
 
