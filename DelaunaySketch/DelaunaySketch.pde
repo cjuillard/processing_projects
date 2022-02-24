@@ -30,6 +30,8 @@ boolean drawPoints = false;
 boolean drawCircumCenters = false;
 boolean drawImage = true;
 
+RadiusProvider radiusProvider;
+
 void settings() {
   String[] paths = new String[] {
     "sample_images/1.jpg",
@@ -64,8 +66,11 @@ void setup() {
   
   final float minRadius = 6;
   final float maxRadius = 50;
-  final float sdDist = 4;
-  RadiusProvider radiusProvider = new RadiusProvider() {
+  
+  //final float minRadius = 4;
+  //final float maxRadius = 100;
+  final float sdDist = 20;
+  radiusProvider = new RadiusProvider() {
     private float minSDFound = Float.MAX_VALUE;
     private float maxSDFound = Float.MIN_VALUE;
     public float getRadius(float worldX, float worldY) {
@@ -181,6 +186,9 @@ void keyPressed()
       animatedPoints.clear();
       animatedLines.clear();
       animatedTris.clear();
+      break;
+    case 's':
+      saveSDDebugImage();
       break;
   }
 }
@@ -466,4 +474,19 @@ float computeSD(float centerWorldX, float centerWorldY, float pixelDist) {
   bSD = sqrt((float)(bSD / totalPixels));
   
   return (float)(rSD + gSD + bSD) / 3f;
+}
+
+void saveSDDebugImage() {
+  PImage img = createImage(ceil(worldWidth), ceil(worldHeight), RGB);
+  img.loadPixels();
+  for(int x = 0; x < img.width; x++) {
+    for(int y = 0; y < img.height; y++) {
+      float radius = radiusProvider.getRadius(x, y);
+      float intensity = (radius - variableSampling.minRadius) / (variableSampling.maxRadius - variableSampling.minRadius);
+      intensity = (1 - intensity) * 255;
+      img.pixels[x + y * img.width] = color(intensity, intensity, intensity);
+    }
+  }
+  img.updatePixels();
+  img.save("output_sd.jpg");
 }
