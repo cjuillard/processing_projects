@@ -32,6 +32,13 @@ boolean drawImage = true;
 
 RadiusProvider radiusProvider;
 
+// Parameters that can adjust the distribution of points
+float minPointRadius = 6;
+float maxPointRadius = 50;
+float sdDist = 20;  // The distance away from each pixel to compute the standard deviation from 
+float minSDMap = 0; // Min standard deviation bound to map to maxPointRadius
+float maxSDMap = 50;  // Max standard deviation bound to map to minPointRadius
+
 void settings() {
   String[] paths = new String[] {
     "sample_images/1.jpg",
@@ -64,20 +71,12 @@ void setup() {
   sampling = new PoissonDiscSampling(worldWidth, worldHeight, 15);
   sampling.genPoints(points);
   
-  final float minRadius = 6;
-  final float maxRadius = 50;
-  
-  //final float minRadius = 4;
-  //final float maxRadius = 100;
-  final float sdDist = 20;
   radiusProvider = new RadiusProvider() {
     private float minSDFound = Float.MAX_VALUE;
     private float maxSDFound = Float.MIN_VALUE;
     public float getRadius(float worldX, float worldY) {
       float sd = computeSD(worldX, worldY, sdDist);
-      float minSD = 0;
-      float maxSD = 50;
-      float t = (sd - minSD) / (maxSD - minSD);
+      float t = (sd - minSDMap) / (maxSDMap - minSDMap);
       t = clamp01(t);
       
       if(sd < minSDFound) {
@@ -89,13 +88,13 @@ void setup() {
       minSDFound = min(minSDFound, sd);
       maxSDFound = max(maxSDFound, sd);
       
-      return lerp(maxRadius, minRadius, t);
+      return lerp(maxPointRadius, minPointRadius, t);
       //return minRadius + (maxRadius - minRadius) * worldX / width;  // more sparse the further right we go
       //return 10;
       
     }
   };
-  variableSampling = new VariablePoissonDiscSampling(worldWidth, worldHeight, minRadius, maxRadius, radiusProvider);
+  variableSampling = new VariablePoissonDiscSampling(worldWidth, worldHeight, minPointRadius, maxPointRadius, radiusProvider);
   variableSampling.genPoints(points);
   println("NumPoints generated: " + points.size()); 
   

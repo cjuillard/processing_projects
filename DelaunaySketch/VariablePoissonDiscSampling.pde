@@ -21,7 +21,7 @@ class VariablePoissonDiscSampling {
     this.minRadius = minRadius;
     this.maxRadius = maxRadius;
     this.radiusProvider = radiusProvider;
-    w = minRadius / sqrt(2);
+    w = minRadius / sqrt(2);  // minRadius is diagonal length of grid cell, w is the width/height of the grid cells  
     cols = floor(worldWidth / w);
     rows = floor(worldHeight / w);
     grid = new PVector[cols * rows];
