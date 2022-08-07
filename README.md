@@ -11,14 +11,31 @@ The logic essentially boils down to...
 2. Triangulate those points with Delaunay
 
 I also added in an animation because... why not?
+
+[![Example output animation](https://img.youtube.com/vi/buedfMFLppg/0.jpg)](https://www.youtube.com/watch?v=buedfMFLppg)
+
 [Example output animation](https://www.youtube.com/watch?v=buedfMFLppg)
+
 
 ## FlowMap
 Sketch of small particle simulation driven by a flow map.
 
+![black and white flow map particle rendering](/FlowMap/FlowMap2/screen-0258.png)
+![colorful flow map particle rendering](/FlowMap/FlowMap2/screen-0235.png)
+
 ## Loops2
 Some satisfyingly seamless GIf loops.
 
+![flower like image loop](/Loops2/loop_small.gif)
+![inward spiral image loop](/Loops2/loop_spiral.gif)
+![star image loop](/Loops2/loop_star.gif)
+![rippling waves loop](/Loops2/waves.gif)
+
+
+
 ## ProceduralAnimation
 Basic 2D bone chain IK.
+
+
+
 
